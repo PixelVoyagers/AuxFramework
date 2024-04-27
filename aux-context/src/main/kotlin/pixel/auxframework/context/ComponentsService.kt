@@ -19,12 +19,15 @@ open class ComponentsService(private val context: AuxContext) {
             try {
                 component.setInstance(construct(component))
             } catch (cause: Throwable) {
-                throw ComponentInitializingException("An error occurred while creating the component '${component.name}'", cause)
+                throw ComponentInitializingException(
+                    "An error occurred while creating the component '${component.name}'",
+                    cause
+                )
             }
         }
     }
 
-    open fun construct(component: ComponentDefinition) : Any? {
+    open fun construct(component: ComponentDefinition): Any? {
         try {
             val constructor = component.type.constructors.first()
             val arguments = mutableMapOf<KParameter, Any?>()
@@ -54,10 +57,16 @@ open class ComponentsService(private val context: AuxContext) {
                     if (it is PostConstruct) it.postConstruct()
                 }
             } catch (cause: InvocationTargetException) {
-                throw ComponentInitializingException("An error occurred while constructing component '${component.name}' ($constructor)", cause)
+                throw ComponentInitializingException(
+                    "An error occurred while constructing component '${component.name}' ($constructor)",
+                    cause
+                )
             }
         } catch (cause: StackOverflowError) {
-            throw ComponentInitializingException("Circular dependency error occurred while creating component '${component.name}'", cause)
+            throw ComponentInitializingException(
+                "Circular dependency error occurred while creating component '${component.name}'",
+                cause
+            )
         }
     }
 
@@ -67,7 +76,8 @@ open class ComponentsService(private val context: AuxContext) {
             for (field in instance::class.memberProperties) {
                 if (field.findAnnotation<Autowired>() == null) continue
                 if (field is KMutableProperty<*>) {
-                    val autowired = context.components().getComponentDefinitionByType(field.returnType, field.annotations)
+                    val autowired =
+                        context.components().getComponentDefinitionByType(field.returnType, field.annotations)
                     field.setter.isAccessible = true
                     field.setter.call(instance, autowired.cast())
                 }

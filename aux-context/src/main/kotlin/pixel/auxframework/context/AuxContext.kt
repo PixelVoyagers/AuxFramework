@@ -29,8 +29,11 @@ abstract class AuxContext {
                 componentPostProcessors.forEach { it.processComponent(component) }
             }
         }
-        componentsService.autowireComponents(components.getAllComponents().filter(ComponentDefinition::isInitialized).filterNot(
-            ComponentDefinition::isLoaded).toSet())
+        componentsService.autowireComponents(
+            components.getAllComponents().filter(ComponentDefinition::isInitialized).filterNot(
+                ComponentDefinition::isLoaded
+            ).toSet()
+        )
     }
 
     protected fun scan() {

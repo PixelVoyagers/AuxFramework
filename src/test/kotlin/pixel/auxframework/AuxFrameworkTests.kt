@@ -12,7 +12,9 @@ import kotlin.test.assertNull
 @Component
 class ComponentA : AfterComponentAutowired, PostConstruct {
 
-    @Autowired private var componentB: ComponentB? = null
+    @Autowired
+    private var componentB: ComponentB? = null
+
     override fun afterComponentAutowired() {
         assertEquals(componentB?.dependency, this)
     }
@@ -22,6 +24,7 @@ class ComponentA : AfterComponentAutowired, PostConstruct {
     }
 
 }
+
 @Component
 class ComponentB(val dependency: ComponentA)
 
