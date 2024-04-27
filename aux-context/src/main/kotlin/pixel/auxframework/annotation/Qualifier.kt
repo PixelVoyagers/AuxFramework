@@ -1,3 +1,3 @@
-package pixel.auxframework.annotations
+package pixel.auxframework.annotation
 
 annotation class Qualifier(val name: String)

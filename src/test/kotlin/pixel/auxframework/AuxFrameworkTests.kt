@@ -1,34 +1,37 @@
 package pixel.auxframework
 
 import org.junit.jupiter.api.Test
-import pixel.auxframework.annotations.Autowired
-import pixel.auxframework.annotations.Component
+import pixel.auxframework.annotation.Autowired
+import pixel.auxframework.annotation.Component
 import pixel.auxframework.component.factory.*
 import pixel.auxframework.context.DefaultAuxContext
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
-@Component
-class ComponentA : AfterComponentAutowired, PostConstruct {
-
-    @Autowired
-    private var componentB: ComponentB? = null
-
-    override fun afterComponentAutowired() {
-        assertEquals(componentB?.dependency, this)
-    }
-
-    override fun postConstruct() {
-        assertNull(componentB)
-    }
-
-}
-
-@Component
-class ComponentB(val dependency: ComponentA)
-
 class AuxFrameworkTests {
+
+    @Component
+    class ComponentA : AfterComponentAutowired, PostConstruct {
+
+        @Autowired
+        private var lazyDependency: ComponentB? = null
+
+        override fun afterComponentAutowired() {
+            assertEquals(this, lazyDependency?.dependency)
+        }
+
+        override fun postConstruct() {
+            assertNull(lazyDependency)
+        }
+
+    }
+
+    @Component
+    class ComponentB(val dependency: ComponentA)
+
+    @Component
+    class TestService : AuxService
 
     @Test
     fun `Context Tests`() {

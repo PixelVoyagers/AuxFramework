@@ -1,6 +1,7 @@
 package pixel.auxframework.component.factory
 
 import kotlin.reflect.KClass
+import kotlin.reflect.full.isSubclassOf
 
 open class ComponentDefinition(var name: String, val type: KClass<*>) {
 
@@ -18,6 +19,10 @@ open class ComponentDefinition(var name: String, val type: KClass<*>) {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T> cast(): T = instance!! as T
+    open fun <T> cast(): T = instance!! as T
+
+    open fun isInstance(type: KClass<*>) = (type.isInstance(isLoaded() && cast())) || type == this.type || this.type.isSubclassOf(type)
 
 }
+
+inline fun <reified T> ComponentDefinition.isInstance() = isInstance(T::class)

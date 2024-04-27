@@ -1,6 +1,6 @@
 package pixel.auxframework.component.factory
 
-import pixel.auxframework.annotations.Qualifier
+import pixel.auxframework.annotation.Qualifier
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubclassOf

@@ -1,6 +1,7 @@
-package pixel.auxframework.annotations
+package pixel.auxframework.annotation
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
+@Component
 @MustBeDocumented
-annotation class Component
+annotation class Repository

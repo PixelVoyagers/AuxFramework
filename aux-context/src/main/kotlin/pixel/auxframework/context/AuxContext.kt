@@ -3,7 +3,7 @@ package pixel.auxframework.context
 import org.reflections.Reflections
 import org.reflections.scanners.Scanners
 import org.reflections.util.ConfigurationBuilder
-import pixel.auxframework.annotations.Component
+import pixel.auxframework.annotation.Component
 import pixel.auxframework.component.factory.ComponentDefinition
 import pixel.auxframework.component.factory.ComponentFactory
 import pixel.auxframework.component.factory.ComponentPostProcessor
@@ -44,7 +44,9 @@ abstract class AuxContext {
                     .addClassLoaders(classLoader)
                     .setScanners(Scanners.TypesAnnotated)
             )
-            val types = reflections.getTypesAnnotatedWith(Component::class.java)
+            val types = reflections.getTypesAnnotatedWith(Component::class.java).filter {
+                !(it.isAnnotation || (!it.isInterface && it.kotlin.isAbstract))
+            }
             types.forEach { type -> components().registerComponentDefinition(ComponentDefinition(type.kotlin)) }
         }
     }

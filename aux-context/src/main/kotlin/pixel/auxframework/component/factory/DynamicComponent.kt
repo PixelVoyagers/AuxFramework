@@ -1,0 +1,3 @@
+package pixel.auxframework.component.factory
+
+interface DynamicComponent
