@@ -2,7 +2,7 @@ package pixel.auxframework.context
 
 import pixel.auxframework.component.factory.ComponentDefinition
 import pixel.auxframework.component.factory.ComponentFactory
-import pixel.auxframework.component.factory.ComponentsService
+import pixel.auxframework.component.factory.ComponentProcessor
 
 open class DefaultComponentFactory(private val context: AuxContext) : ComponentFactory() {
 
@@ -29,6 +29,6 @@ open class DefaultAuxContext : AuxContext() {
 
     override val components = DefaultComponentFactory(this)
 
-    override val componentsService = ComponentsService(this)
+    override val componentProcessor = ComponentProcessor(this)
 
 }

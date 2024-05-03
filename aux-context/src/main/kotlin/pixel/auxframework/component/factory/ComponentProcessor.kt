@@ -11,17 +11,17 @@ import pixel.auxframework.util.toParameterized
 import java.lang.reflect.Array
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
-import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KParameter
+import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
-open class ComponentsService(private val context: AuxContext) {
+open class ComponentProcessor(private val context: AuxContext) {
 
-    open fun initializeComponent(component: ComponentDefinition) {
-        if (component.isInitialized()) return
+    open fun initializeComponent(component: ComponentDefinition) = component.also {
+        if (component.isInitialized()) return@also
         try {
             component.setInstance(construct(component))
         } catch (cause: Throwable) {
@@ -32,7 +32,7 @@ open class ComponentsService(private val context: AuxContext) {
         }
     }
 
-    open fun constructAbstract(component: ComponentDefinition): Any? {
+    open fun constructInterface(component: ComponentDefinition): Any? {
         val handler = InvocationHandler { proxy, method, args ->
             val arguments = args ?: emptyArray()
             val abstractComponentMethodInvocationHandlers = context.components().getComponents<AbstractComponentMethodInvocationHandler<Any?>>()
@@ -64,19 +64,20 @@ open class ComponentsService(private val context: AuxContext) {
 
     open fun construct(component: ComponentDefinition): Any? {
         try {
-            val instance: Any?
-            if (component.type.isAbstract) instance = constructAbstract(component)
-            else {
-                val constructor = component.type.constructors.first()
-                val arguments = mutableMapOf<KParameter, Any?>()
-                for (parameter in constructor.parameters) arguments[parameter] = autowireParameter(parameter)
-                try {
-                    instance = constructor.callBy(arguments)
-                } catch (cause: InvocationTargetException) {
-                    throw ComponentInitializingException(
-                        "An error occurred while constructing component '${component.name}' ($constructor)",
-                        cause
-                    )
+            val instance = when {
+                component.type.java.isInterface -> constructInterface(component)
+                else -> {
+                    val constructor = component.type.constructors.first()
+                    val arguments = mutableMapOf<KParameter, Any?>()
+                    for (parameter in constructor.parameters) arguments[parameter] = autowire(parameter.type)
+                    try {
+                        constructor.callBy(arguments)
+                    } catch (cause: InvocationTargetException) {
+                        throw ComponentInitializingException(
+                            "An error occurred while constructing component '${component.name}' ($constructor)",
+                            cause
+                        )
+                    }
                 }
             }
             return instance.also {
@@ -90,10 +91,10 @@ open class ComponentsService(private val context: AuxContext) {
         }
     }
 
-    open fun autowireParameter(parameter: KParameter): Any? {
-        if ((parameter.type.classifier as KClass<*>).java.isArray) {
-            val type = parameter.type.classifier as KClass<*>
-            val arrayComponentType = type.java.arrayType().componentType
+    open fun autowire(type: KType, annotations: List<Annotation> = type.annotations): Any? {
+        val classifier = type.toClass()
+        if (classifier.java.isArray) {
+            val arrayComponentType = classifier.java.arrayType().componentType
             val components = context.components()
                 .getComponentDefinitions(arrayComponentType)
                 .map {
@@ -106,28 +107,26 @@ open class ComponentsService(private val context: AuxContext) {
             }
             return array
         } else {
-            val componentDefinition = context.components().getComponentDefinitionByType(parameter.type)
+            val componentDefinition = context.components().getComponentDefinitionByType(type, annotations)
             initializeComponent(componentDefinition)
             return componentDefinition.cast()
         }
     }
 
-    open fun autowireComponents(components: Set<ComponentDefinition>) {
-        for (component in components) {
-            val instance = component.cast<Any>()
-            for (field in instance::class.memberProperties) {
-                if (field.findAnnotation<Autowired>() == null) continue
-                if (field is KMutableProperty<*>) {
-                    val autowired =
-                        context.components().getComponentDefinitionByType(field.returnType, field.annotations)
-                    field.setter.isAccessible = true
-                    field.setter.call(instance, autowired.cast())
-                }
+    open fun autowireComponent(component: ComponentDefinition) = initializeComponent(component).also {
+        if (component.isLoaded()) return@also
+        val instance = component.cast<Any>()
+        for (field in instance::class.memberProperties) {
+            if (field.findAnnotation<Autowired>() == null) continue
+            if (field is KMutableProperty<*>) {
+                val autowired =
+                    context.components().getComponentDefinitionByType(field.returnType, field.annotations)
+                field.setter.isAccessible = true
+                field.setter.call(instance, autowired.cast())
             }
-            context.components().getAllComponents()
-            if (instance is AfterComponentAutowired) instance.afterComponentAutowired()
         }
-
+        context.components().getAllComponents()
+        if (instance is AfterComponentAutowired) instance.afterComponentAutowired()
     }
 
 }

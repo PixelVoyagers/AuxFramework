@@ -19,7 +19,7 @@ abstract class AuxContext : DisposableComponent {
 
     val classLoaders = mutableSetOf<ClassLoader>()
     protected abstract val components: ComponentFactory
-    protected abstract val componentsService: ComponentsService
+    protected abstract val componentProcessor: ComponentProcessor
 
     init {
         classLoaders += this::class.java.classLoader
@@ -30,27 +30,20 @@ abstract class AuxContext : DisposableComponent {
     protected fun appendComponents(list: MutableList<Any>) {
         list.addAll(
             listOf(
-                this, components, componentsService
+                this, components, componentProcessor
             )
         )
     }
 
     open fun refresh() {
-        mutableListOf<Any>().also(::appendComponents).forEach { components.registerComponentDefinition(
-            ComponentDefinition(it)
-        ) }
-        components.getAllComponents().filterNot(ComponentDefinition::isInitialized).toSet().apply {
-            this.forEach(componentsService::initializeComponent)
-            for (component in this) {
-                val componentPostProcessors = components().getComponents<ComponentPostProcessor>()
-                componentPostProcessors.forEach { it.processComponent(component) }
+        components.getAllComponents()
+            .map(componentProcessor::initializeComponent)
+            .forEach { component ->
+                components()
+                    .getComponents<ComponentPostProcessor>()
+                    .forEach { it.processComponent(component) }
             }
-        }
-        componentsService.autowireComponents(
-            components.getAllComponents().filter(ComponentDefinition::isInitialized).filterNot(
-                ComponentDefinition::isLoaded
-            ).toSet()
-        )
+        components.getAllComponents().map(componentProcessor::autowireComponent)
     }
 
     protected fun scan() {
@@ -76,6 +69,10 @@ abstract class AuxContext : DisposableComponent {
     }
 
     open fun launch() {
+        mutableListOf<Any>().also(::appendComponents)
+            .map { ComponentDefinition(it) }
+            .map { it.also { it.loaded = true } }
+            .forEach(components::registerComponentDefinition)
         scan()
         refresh()
     }

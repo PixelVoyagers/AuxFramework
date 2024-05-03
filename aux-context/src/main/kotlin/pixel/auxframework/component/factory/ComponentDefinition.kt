@@ -26,7 +26,7 @@ open class ComponentDefinition(var name: String, val type: KClass<*>) {
     @Suppress("UNCHECKED_CAST")
     open fun <T> cast(): T = instance!! as T
 
-    open fun isInstance(type: KClass<*>) = (type.isInstance(isLoaded() && cast())) || type == this.type || this.type.isSubclassOf(type)
+    open fun isInstance(type: KClass<*>) = (isInitialized() && type.isInstance(cast())) || type == this.type || this.type.isSubclassOf(type)
 
 }
 
