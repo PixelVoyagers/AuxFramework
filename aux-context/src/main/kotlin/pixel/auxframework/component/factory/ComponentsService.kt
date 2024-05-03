@@ -6,10 +6,11 @@ import net.bytebuddy.implementation.InvocationHandlerAdapter
 import pixel.auxframework.annotation.Autowired
 import pixel.auxframework.context.AuxContext
 import pixel.auxframework.context.builtin.AbstractComponentMethodInvocationHandler
+import pixel.auxframework.util.toClass
+import pixel.auxframework.util.toParameterized
 import java.lang.reflect.Array
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.ParameterizedType
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KParameter
@@ -34,10 +35,13 @@ open class ComponentsService(private val context: AuxContext) {
     open fun constructAbstract(component: ComponentDefinition): Any? {
         val handler = InvocationHandler { proxy, method, args ->
             val arguments = args ?: emptyArray()
-            val components = context.components().getComponents<AbstractComponentMethodInvocationHandler<Any?>>()
-            val results = components.filter {
-                val type = ((it::class.java.genericInterfaces.first() as ParameterizedType).actualTypeArguments.first())
-                (type as Class<*>).kotlin.isInstance(proxy)
+            val abstractComponentMethodInvocationHandlers = context.components().getComponents<AbstractComponentMethodInvocationHandler<Any?>>()
+            val results = abstractComponentMethodInvocationHandlers.filter {
+                it::class.java.genericInterfaces.first()
+                    .toParameterized()
+                    .actualTypeArguments.first()
+                    .toClass()
+                    .isInstance(proxy)
             }.map {
                 it.handleAbstractComponentMethodInvocation(proxy, method, arguments)
             }
@@ -90,13 +94,15 @@ open class ComponentsService(private val context: AuxContext) {
         if ((parameter.type.classifier as KClass<*>).java.isArray) {
             val type = parameter.type.classifier as KClass<*>
             val arrayComponentType = type.java.arrayType().componentType
-            val components = context.components().getComponentDefinitions(arrayComponentType).map {
-                initializeComponent(it)
-                it.cast<Any>()
-            }
-            val array = Array.newInstance(arrayComponentType) as kotlin.Array<*>
-            for (index in components.indices) {
-                Array.set(array, index, components[index])
+            val components = context.components()
+                .getComponentDefinitions(arrayComponentType)
+                .map {
+                    initializeComponent(it)
+                    it.cast<Any>()
+                }
+            val array = Array.newInstance(arrayComponentType, components.size)
+            components.forEachIndexed { index, element ->
+                Array.set(array, index, element)
             }
             return array
         } else {

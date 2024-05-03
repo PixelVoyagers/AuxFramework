@@ -1,6 +1,7 @@
 package pixel.auxframework.component.factory
 
 import pixel.auxframework.annotation.Qualifier
+import pixel.auxframework.util.toClass
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubclassOf
@@ -32,7 +33,7 @@ inline fun <reified T : Any> ComponentFactory.getComponents() = getComponents(T:
 fun ComponentFactory.getComponentDefinitionByType(type: KType, annotations: List<Annotation>): ComponentDefinition {
     val qualifier = annotations.filterIsInstance<Qualifier>().firstOrNull()
     return if (qualifier != null) getComponent(qualifier.name)
-    else getComponentDefinition(type.classifier!! as KClass<*>)
+    else getComponentDefinition(type.toClass())
 }
 
 fun ComponentFactory.getComponentDefinitionByType(type: KType) = getComponentDefinitionByType(type, type.annotations)
