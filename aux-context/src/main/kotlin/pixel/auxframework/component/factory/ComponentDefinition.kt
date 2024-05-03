@@ -5,6 +5,11 @@ import kotlin.reflect.full.isSubclassOf
 
 open class ComponentDefinition(var name: String, val type: KClass<*>) {
 
+    constructor(instance: Any, name: String = instance::class.java.name, type: KClass<*> = instance::class, loaded: Boolean = true) : this(name, type) {
+        this.instance = instance
+        this.loaded = loaded
+    }
+
     constructor(type: KClass<*>) : this(type.java.name, type)
 
     private var instance: Any? = null

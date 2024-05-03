@@ -17,7 +17,6 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
-
 open class ComponentsService(private val context: AuxContext) {
 
     open fun initializeComponents(components: Set<ComponentDefinition>) {

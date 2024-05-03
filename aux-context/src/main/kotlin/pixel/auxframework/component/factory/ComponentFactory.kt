@@ -5,7 +5,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubclassOf
 
-abstract class ComponentFactory {
+abstract class ComponentFactory : DisposableComponent {
 
     abstract fun registerComponentDefinition(componentDefinition: ComponentDefinition)
     abstract fun getAllComponents(): Set<ComponentDefinition>
@@ -23,8 +23,6 @@ abstract class ComponentFactory {
     open fun <T> getComponent(name: String): T = getComponentDefinition(name).cast()
     open fun <T : Any> getComponent(type: KClass<T>): T = getComponents(type.java).first()
     open fun <T> getComponent(type: Class<T>): T = getComponents(type).first()
-
-    abstract fun dispose()
 
 }
 

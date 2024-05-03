@@ -3,22 +3,22 @@ package pixel.auxframework.context.builtin
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
-import pixel.auxframework.annotation.Component
 import pixel.auxframework.annotation.Repository
+import pixel.auxframework.annotation.Service
 import java.lang.reflect.Method
 
 interface ListRepository
 
 interface SimpleListRepository <T> : ListRepository {
-    fun add(service: T)
+    fun add(element: T)
     fun getAll(): List<T>
-    fun remove(service: T)
+    fun remove(element: T)
     fun removeAt(index: Int)
     fun removeElement(element: T)
 }
 
-@Component
-class ListRepositoryProxy : AbstractComponentMethodInvocationHandler<ListRepository> {
+@Service
+class ListRepositoryMethodInvocationMappingService : AbstractComponentMethodInvocationHandler<ListRepository> {
 
     private val container = mutableMapOf<ListRepository, MutableMap<String, MutableList<Any?>>>()
 

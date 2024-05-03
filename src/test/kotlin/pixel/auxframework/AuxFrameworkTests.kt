@@ -3,14 +3,20 @@ package pixel.auxframework
 import org.junit.jupiter.api.Test
 import pixel.auxframework.annotation.Autowired
 import pixel.auxframework.annotation.Component
+import pixel.auxframework.annotation.OnlyIn
 import pixel.auxframework.component.factory.*
 import pixel.auxframework.context.DefaultAuxContext
+import kotlin.concurrent.thread
+import kotlin.reflect.jvm.jvmName
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class AuxFrameworkTests {
 
+    class AuxFrameworkTestsContext : DefaultAuxContext()
+
+    @OnlyIn(contextType = [AuxFrameworkTestsContext::class])
     @Component
     class ComponentA : AfterComponentAutowired, PostConstruct {
 
@@ -27,16 +33,21 @@ class AuxFrameworkTests {
 
     }
 
+    @OnlyIn(contextType = [AuxFrameworkTestsContext::class])
     @Component
     class ComponentB(val dependency: ComponentA)
 
+    @OnlyIn(contextType = [AuxFrameworkTestsContext::class])
     @Component
-    class TestService : AuxService
+    class TestModule : AuxModule, AuxModuleStatusSupplier {
+        override fun getStatus() = enumValues<ModuleStatus>().random()
+    }
 
     @Test
     fun `Context Tests`() {
-        val context = DefaultAuxContext()
-        context.launch()
+        val context = AuxFrameworkTestsContext()
+        context.name = this::class.jvmName
+        context.run()
         val dependency = context.components()
             .getAllComponents()
             .filter(ComponentDefinition::isInitialized)
@@ -45,7 +56,11 @@ class AuxFrameworkTests {
             .firstOrNull()
         assertNotNull(dependency)
         assertEquals(dependency.dependency, context.components().getComponent())
-        context.dispose()
+        Runtime.getRuntime().addShutdownHook(
+            thread(start = false) {
+                context.close()
+            }
+        )
     }
 
 }
