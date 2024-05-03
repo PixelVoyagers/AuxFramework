@@ -40,7 +40,7 @@ abstract class AuxContext : DisposableComponent {
             ComponentDefinition(it)
         ) }
         components.getAllComponents().filterNot(ComponentDefinition::isInitialized).toSet().apply {
-            componentsService.initializeComponents(this)
+            this.forEach(componentsService::initializeComponent)
             for (component in this) {
                 val componentPostProcessors = components().getComponents<ComponentPostProcessor>()
                 componentPostProcessors.forEach { it.processComponent(component) }

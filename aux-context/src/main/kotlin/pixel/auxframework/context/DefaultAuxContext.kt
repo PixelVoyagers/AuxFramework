@@ -2,6 +2,7 @@ package pixel.auxframework.context
 
 import pixel.auxframework.component.factory.ComponentDefinition
 import pixel.auxframework.component.factory.ComponentFactory
+import pixel.auxframework.component.factory.ComponentsService
 
 open class DefaultComponentFactory(private val context: AuxContext) : ComponentFactory() {
 

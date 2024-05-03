@@ -1,10 +1,10 @@
-package pixel.auxframework.context
+package pixel.auxframework.component.factory
 
 import arrow.core.Some
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.implementation.InvocationHandlerAdapter
 import pixel.auxframework.annotation.Autowired
-import pixel.auxframework.component.factory.*
+import pixel.auxframework.context.AuxContext
 import pixel.auxframework.context.builtin.AbstractComponentMethodInvocationHandler
 import java.lang.reflect.Array
 import java.lang.reflect.InvocationHandler
@@ -19,21 +19,19 @@ import kotlin.reflect.jvm.isAccessible
 
 open class ComponentsService(private val context: AuxContext) {
 
-    open fun initializeComponents(components: Set<ComponentDefinition>) {
-        for (component in components) {
-            if (component.isInitialized()) continue
-            try {
-                component.setInstance(construct(component))
-            } catch (cause: Throwable) {
-                throw ComponentInitializingException(
-                    "An error occurred while creating the component '${component.name}'",
-                    cause
-                )
-            }
+    open fun initializeComponent(component: ComponentDefinition) {
+        if (component.isInitialized()) return
+        try {
+            component.setInstance(construct(component))
+        } catch (cause: Throwable) {
+            throw ComponentInitializingException(
+                "An error occurred while creating the component '${component.name}'",
+                cause
+            )
         }
     }
 
-    fun constructAbstract(component: ComponentDefinition): Any? {
+    open fun constructAbstract(component: ComponentDefinition): Any? {
         val handler = InvocationHandler { proxy, method, args ->
             val arguments = args ?: emptyArray()
             val components = context.components().getComponents<AbstractComponentMethodInvocationHandler<Any?>>()
@@ -67,27 +65,7 @@ open class ComponentsService(private val context: AuxContext) {
             else {
                 val constructor = component.type.constructors.first()
                 val arguments = mutableMapOf<KParameter, Any?>()
-                for (parameter in constructor.parameters) {
-                    if ((parameter.type.classifier as KClass<*>).java.isArray) {
-                        val type = parameter.type.classifier as KClass<*>
-                        val arrayComponentType = type.java.arrayType().componentType
-                        val components = context.components().getComponentDefinitions(arrayComponentType).map {
-                            if (!it.isInitialized())
-                                it.setInstance(construct(it))
-                            it.cast<Any>()
-                        }
-                        val array = Array.newInstance(arrayComponentType) as kotlin.Array<*>
-                        for (index in components.indices) {
-                            Array.set(array, index, components[index])
-                        }
-                        arguments[parameter] = array
-                    } else {
-                        val componentDefinition = context.components().getComponentDefinitionByType(parameter.type)
-                        if (!componentDefinition.isInitialized())
-                            componentDefinition.setInstance(construct(componentDefinition))
-                        arguments[parameter] = componentDefinition.cast()
-                    }
-                }
+                for (parameter in constructor.parameters) arguments[parameter] = autowireParameter(parameter)
                 try {
                     instance = constructor.callBy(arguments)
                 } catch (cause: InvocationTargetException) {
@@ -105,6 +83,26 @@ open class ComponentsService(private val context: AuxContext) {
                 "Circular dependency error occurred while creating component '${component.name}'",
                 cause
             )
+        }
+    }
+
+    open fun autowireParameter(parameter: KParameter): Any? {
+        if ((parameter.type.classifier as KClass<*>).java.isArray) {
+            val type = parameter.type.classifier as KClass<*>
+            val arrayComponentType = type.java.arrayType().componentType
+            val components = context.components().getComponentDefinitions(arrayComponentType).map {
+                initializeComponent(it)
+                it.cast<Any>()
+            }
+            val array = Array.newInstance(arrayComponentType) as kotlin.Array<*>
+            for (index in components.indices) {
+                Array.set(array, index, components[index])
+            }
+            return array
+        } else {
+            val componentDefinition = context.components().getComponentDefinitionByType(parameter.type)
+            initializeComponent(componentDefinition)
+            return componentDefinition.cast()
         }
     }
 
