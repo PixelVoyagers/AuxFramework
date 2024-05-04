@@ -5,6 +5,8 @@ import pixel.auxframework.util.toClass
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
+class ComponentNotFoundException(message: String? = null, cause: Throwable? = null) : RuntimeException(message, cause)
+
 /**
  * 组件工厂
  * @see [pixel.auxframework.context.DefaultComponentFactory]
@@ -24,17 +26,17 @@ abstract class ComponentFactory : DisposableComponent {
     /**
      * 根据名称获取组件定义
      */
-    open fun getComponentDefinition(name: String): ComponentDefinition = getAllComponents().first { it.name == name }
+    open fun getComponentDefinition(name: String): ComponentDefinition = getAllComponents().firstOrNull { it.name == name } ?: throw ComponentNotFoundException(name)
 
     /**
      * 根据类型获取组件定义
      */
-    open fun getComponentDefinition(type: Class<*>): ComponentDefinition = getComponentDefinitions(type).first()
+    open fun getComponentDefinition(type: Class<*>): ComponentDefinition = getComponentDefinition(type.kotlin)
 
     /**
      * 根据类型获取组件定义
      */
-    open fun getComponentDefinition(type: KClass<*>): ComponentDefinition = getComponentDefinitions(type).first()
+    open fun getComponentDefinition(type: KClass<*>): ComponentDefinition = getComponentDefinitions(type).firstOrNull() ?: throw ComponentNotFoundException(type.toString())
 
     /**
      * 根据类型获取组件定义
@@ -63,12 +65,12 @@ abstract class ComponentFactory : DisposableComponent {
     /**
      * 根据类型获取组件
      */
-    open fun <T : Any> getComponent(type: KClass<T>): T = getComponents(type.java).first()
+    open fun <T : Any> getComponent(type: KClass<T>): T = getComponents(type.java).firstOrNull() ?: throw ComponentNotFoundException(type.toString())
 
     /**
      * 根据类型获取组件
      */
-    open fun <T> getComponent(type: Class<T>): T = getComponents(type).first()
+    open fun <T : Any> getComponent(type: Class<T>): T = getComponent(type.kotlin)
 
     /**
      * 根据类型获取全部组件

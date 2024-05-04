@@ -1,6 +1,7 @@
 package pixel.auxframework
 
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
 import pixel.auxframework.annotation.Autowired
 import pixel.auxframework.annotation.Component
 import pixel.auxframework.annotation.OnlyIn
@@ -21,7 +22,12 @@ class AuxFrameworkTests {
     @Component
     class ComponentA : AfterComponentAutowired, PostConstruct {
 
-        @Autowired private lateinit var context: AuxContext
+        @Autowired
+        private lateinit var context: AuxContext
+        @Autowired
+        private lateinit var components: Array<*>
+        @Autowired
+        private lateinit var componentFactory: ComponentFactory
 
         @Component
         fun subComponent(): Any {
@@ -36,6 +42,13 @@ class AuxFrameworkTests {
         private var lazyDependency: ComponentB? = null
 
         override fun afterComponentAutowired() {
+            val componentFactoryComponents = componentFactory.getComponents<Any>()
+            assertAll(
+                *components
+                    .map {
+                        { assert(it in componentFactoryComponents) }
+                    }.toTypedArray()
+            )
             assertEquals(this, lazyDependency?.dependency)
         }
 
