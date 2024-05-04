@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "2.0.0-RC1"
+    id("maven-publish")
 }
 
 java {
@@ -21,6 +22,7 @@ allprojects {
     version = rootProject.version
     group = rootProject.group
 
+
 }
 
 group = "pixel.auxframework"
@@ -36,4 +38,11 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+configure<PublishingExtension> {
+    publications.create<MavenPublication>("maven") {
+        from(components.getByName("kotlin"))
+        artifact(tasks.kotlinSourcesJar)
+    }
 }
