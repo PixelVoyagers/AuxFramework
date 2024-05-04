@@ -150,7 +150,8 @@ open class ComponentProcessor(private val context: AuxContext) {
                 member.callSuspendBy(actualArguments)
             } else member.callBy(actualArguments)
             if (invocation != null)
-                context.componentFactory().registerComponentDefinition(ComponentDefinition(invocation, name = "${componentDefinition.name}::${member.name}"))
+                context.componentFactory()
+                    .registerComponentDefinition(ComponentDefinition(invocation, name = "${componentDefinition.name}::${member.name}"))
         }
         if (instance is AfterComponentAutowired) instance.afterComponentAutowired()
     }

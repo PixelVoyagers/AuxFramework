@@ -62,7 +62,9 @@ abstract class AuxContext {
      */
     open fun refresh() {
         componentFactory().getAllComponents()
-            .map(componentProcessor::initializeComponent)
+            .map {
+                componentProcessor.initializeComponent(it)
+            }
         componentFactory.getAllComponents().map(componentProcessor::autowireComponent)
             .forEach { component ->
             componentFactory()
@@ -103,8 +105,7 @@ abstract class AuxContext {
      */
     open fun launch() {
         mutableListOf<Any>().also(::appendComponents)
-            .map { ComponentDefinition(it) }
-            .map { it.also { it.loaded = true } }
+            .map { ComponentDefinition(it, loaded = true) }
             .forEach(componentFactory()::registerComponentDefinition)
         scan()
         refresh()
