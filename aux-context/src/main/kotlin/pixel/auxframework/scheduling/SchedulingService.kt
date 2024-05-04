@@ -1,7 +1,7 @@
 package pixel.auxframework.scheduling
 
-import pixel.auxframework.annotation.Repository
-import pixel.auxframework.annotation.Service
+import pixel.auxframework.component.annotation.Repository
+import pixel.auxframework.component.annotation.Service
 import pixel.auxframework.component.factory.ComponentDefinition
 import pixel.auxframework.component.factory.ComponentFactory
 import pixel.auxframework.component.factory.ComponentPostProcessor
@@ -19,12 +19,17 @@ import kotlin.reflect.full.memberFunctions
 @Repository
 interface CompiledSchedulesRepository : SimpleListRepository<CompiledSchedule>
 
-interface ScheduleMapping <T : Annotation> {
-    fun mappingSchedule(annotation: T, memberFunction: KFunction<*>, componentDefinition: ComponentDefinition) : CompiledSchedule
+interface ScheduleMapping<T : Annotation> {
+    fun mappingSchedule(
+        annotation: T,
+        memberFunction: KFunction<*>,
+        componentDefinition: ComponentDefinition
+    ): CompiledSchedule
 }
 
 @Service
-class SchedulingService(val repository: CompiledSchedulesRepository, val componentFactory: ComponentFactory) : ComponentPostProcessor {
+class SchedulingService(val repository: CompiledSchedulesRepository, val componentFactory: ComponentFactory) :
+    ComponentPostProcessor {
     override fun processComponent(componentDefinition: ComponentDefinition) {
         val component = (componentDefinition.castOrNull<Any>() ?: return)
         val componentClass = component::class
@@ -41,7 +46,13 @@ class SchedulingService(val repository: CompiledSchedulesRepository, val compone
         for (member in componentClass.memberFunctions) {
             member.findAnnotation<Scheduled>() ?: continue
             for (annotation in member.annotations) {
-                mappers[annotation.annotationClass]?.forEach { it.mappingSchedule(annotation, member, componentDefinition) }
+                mappers[annotation.annotationClass]?.forEach {
+                    it.mappingSchedule(
+                        annotation,
+                        member,
+                        componentDefinition
+                    )
+                }
             }
         }
     }

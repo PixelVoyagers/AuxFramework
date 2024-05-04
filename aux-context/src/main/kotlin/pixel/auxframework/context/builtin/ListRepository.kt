@@ -3,8 +3,8 @@ package pixel.auxframework.context.builtin
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
-import pixel.auxframework.annotation.Repository
-import pixel.auxframework.annotation.Service
+import pixel.auxframework.component.annotation.Repository
+import pixel.auxframework.component.annotation.Service
 import java.lang.reflect.Method
 
 /**
@@ -27,7 +27,7 @@ interface ListRepository
 /**
  * 简单的列表仓库
  */
-interface SimpleListRepository <T> : ListRepository {
+interface SimpleListRepository<T> : ListRepository {
     fun add(element: T)
     fun getAll(): List<T>
     fun remove(element: T)

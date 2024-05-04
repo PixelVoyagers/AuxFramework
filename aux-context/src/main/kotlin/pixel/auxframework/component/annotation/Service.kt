@@ -1,4 +1,4 @@
-package pixel.auxframework.annotation
+package pixel.auxframework.component.annotation
 
 /**
  * 服务组件

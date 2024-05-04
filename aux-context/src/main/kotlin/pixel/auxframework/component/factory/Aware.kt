@@ -1,6 +1,6 @@
 package pixel.auxframework.component.factory
 
-import pixel.auxframework.annotation.Service
+import pixel.auxframework.component.annotation.Service
 import pixel.auxframework.context.builtin.AfterContextRefreshed
 
 interface Aware

@@ -1,4 +1,4 @@
-package pixel.auxframework.annotation
+package pixel.auxframework.component.annotation
 
 /**
  * 当挂载到 [AnnotationTarget.CONSTRUCTOR] 时，将该constructor设置为默认构造器

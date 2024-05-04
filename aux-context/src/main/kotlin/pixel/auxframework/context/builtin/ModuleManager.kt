@@ -1,7 +1,7 @@
 package pixel.auxframework.context.builtin
 
-import pixel.auxframework.annotation.Component
-import pixel.auxframework.annotation.Repository
+import pixel.auxframework.component.annotation.Component
+import pixel.auxframework.component.annotation.Repository
 import pixel.auxframework.component.factory.AuxModule
 import pixel.auxframework.component.factory.ComponentDefinition
 import pixel.auxframework.component.factory.ComponentPostProcessor

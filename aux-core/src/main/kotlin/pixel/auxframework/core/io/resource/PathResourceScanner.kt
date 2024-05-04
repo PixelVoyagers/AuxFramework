@@ -5,18 +5,21 @@ import pixel.auxframework.core.io.Resource
 import java.net.URI
 import java.nio.file.Path
 
-class PathResourceScanner(val resourceLoader: ResourceLoader, private val pathMatcher: PathMatcher = DefaultPathMatcher()) : ResourceLoader {
+class PathResourceScanner(
+    val resourceLoader: ResourceLoader,
+    private val pathMatcher: PathMatcher = DefaultPathMatcher()
+) : ResourceLoader {
 
     fun getMatcher() = pathMatcher
 
     companion object {
-        const val prefixClasspath = "classpath"
-        const val prefixFile = "file"
+        const val PREFIX_CLASSPATH = "classpath"
+        const val PREFIX_FILE = "file"
     }
 
     override fun getResources(pattern: String): List<Resource> {
-        return if (pattern.startsWith("$prefixFile:")) getFileResources(pattern)
-        else if (pattern.startsWith("$prefixClasspath:")) resourceLoader.getResources(pattern)
+        return if (pattern.startsWith("$PREFIX_FILE:")) getFileResources(pattern)
+        else if (pattern.startsWith("$PREFIX_CLASSPATH:")) resourceLoader.getResources(pattern)
         else emptyList()
     }
 
@@ -27,7 +30,7 @@ class PathResourceScanner(val resourceLoader: ResourceLoader, private val pathMa
         val realPath = path.subList(0, path.indexOfFirst { "*" in it }.let { if (it == -1) path.size else it })
         val file = Path.of("", *realPath.toTypedArray()).toFile()
 
-         return file.walkTopDown().filter {
+        return file.walkTopDown().filter {
             pathMatcher.matches(it.path, pattern)
         }.map { FileSystemResource(it) }.toList()
     }

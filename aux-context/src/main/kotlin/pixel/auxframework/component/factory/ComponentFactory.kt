@@ -1,6 +1,6 @@
 package pixel.auxframework.component.factory
 
-import pixel.auxframework.annotation.Qualifier
+import pixel.auxframework.component.annotation.Qualifier
 import pixel.auxframework.util.toClass
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
@@ -26,7 +26,8 @@ abstract class ComponentFactory : DisposableComponent {
     /**
      * 根据名称获取组件定义
      */
-    open fun getComponentDefinition(name: String): ComponentDefinition = getAllComponents().firstOrNull { it.name == name } ?: throw ComponentNotFoundException(name)
+    open fun getComponentDefinition(name: String): ComponentDefinition =
+        getAllComponents().firstOrNull { it.name == name } ?: throw ComponentNotFoundException(name)
 
     /**
      * 根据类型获取组件定义
@@ -36,12 +37,16 @@ abstract class ComponentFactory : DisposableComponent {
     /**
      * 根据类型获取组件定义
      */
-    open fun getComponentDefinition(type: KClass<*>): ComponentDefinition = getComponentDefinitions(type).firstOrNull() ?: throw ComponentNotFoundException(type.toString())
+    open fun getComponentDefinition(type: KClass<*>): ComponentDefinition =
+        getComponentDefinitions(type).firstOrNull() ?: throw ComponentNotFoundException(type.toString())
 
     /**
      * 根据类型获取组件定义
      */
-    open fun getComponentDefinition(type: KType, annotations: List<Annotation> = type.annotations): ComponentDefinition {
+    open fun getComponentDefinition(
+        type: KType,
+        annotations: List<Annotation> = type.annotations
+    ): ComponentDefinition {
         val qualifier = annotations.filterIsInstance<Qualifier>().firstOrNull()
         return if (qualifier != null) getComponent(qualifier.name)
         else getComponentDefinition(type.toClass())
@@ -65,7 +70,8 @@ abstract class ComponentFactory : DisposableComponent {
     /**
      * 根据类型获取组件
      */
-    open fun <T : Any> getComponent(type: KClass<T>): T = getComponents(type.java).firstOrNull() ?: throw ComponentNotFoundException(type.toString())
+    open fun <T : Any> getComponent(type: KClass<T>): T =
+        getComponents(type.java).firstOrNull() ?: throw ComponentNotFoundException(type.toString())
 
     /**
      * 根据类型获取组件

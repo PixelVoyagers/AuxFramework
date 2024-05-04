@@ -1,4 +1,4 @@
-package pixel.auxframework.annotation
+package pixel.auxframework.component.annotation
 
 /**
  * 根据名称限定组件

@@ -1,22 +1,23 @@
-package pixel.auxframework
+package pixel.auxframework.application
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
-import pixel.auxframework.annotation.Autowired
-import pixel.auxframework.annotation.Component
-import pixel.auxframework.annotation.OnlyIn
+import pixel.auxframework.component.annotation.Autowired
+import pixel.auxframework.component.annotation.Component
+import pixel.auxframework.component.annotation.OnlyIn
 import pixel.auxframework.component.factory.*
 import pixel.auxframework.context.AuxContext
-import pixel.auxframework.context.DefaultAuxContext
-import kotlin.concurrent.thread
+import pixel.auxframework.scheduling.annotation.Scheduled
+import pixel.auxframework.scheduling.annotation.TimerSchedule
+import java.util.concurrent.TimeUnit
 import kotlin.reflect.jvm.jvmName
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
-class AuxFrameworkTests {
+class AuxApplicationTests {
 
-    class AuxFrameworkTestsContext : DefaultAuxContext()
+    class AuxFrameworkTestsContext : ApplicationContext()
 
     @OnlyIn(contextType = [AuxFrameworkTestsContext::class])
     @Component
@@ -24,8 +25,10 @@ class AuxFrameworkTests {
 
         @Autowired
         private lateinit var context: AuxContext
+
         @Autowired
         private lateinit var components: Array<*>
+
         @Autowired
         private lateinit var componentFactory: ComponentFactory
 
@@ -39,7 +42,7 @@ class AuxFrameworkTests {
         }
 
         @Autowired
-        private var lazyDependency: ComponentB? = null
+        var lazyDependency: ComponentB? = null
 
         override fun afterComponentAutowired() {
             val componentFactoryComponents = componentFactory.getComponents<Any>()
@@ -60,7 +63,14 @@ class AuxFrameworkTests {
 
     @OnlyIn(contextType = [AuxFrameworkTestsContext::class])
     @Component
-    class ComponentB(val dependency: ComponentA)
+    @Scheduled
+    class ComponentB(val dependency: ComponentA) {
+
+        @Scheduled
+        @TimerSchedule(0, TimeUnit.MILLISECONDS)
+        fun run() = assert(dependency.lazyDependency == this)
+
+    }
 
     @OnlyIn(contextType = [AuxFrameworkTestsContext::class])
     @Component
@@ -69,10 +79,14 @@ class AuxFrameworkTests {
     }
 
     @Test
-    fun `Context Tests`() {
+    fun `Application Tests`() {
         val context = AuxFrameworkTestsContext()
         context.name = this::class.jvmName
-        context.run()
+        val application = AuxApplicationBuilder()
+            .target<AuxApplicationTests>()
+            .context(context)
+            .build()
+        application.run()
         val dependency = context.componentFactory()
             .getAllComponents()
             .filter(ComponentDefinition::isInitialized)
@@ -81,11 +95,7 @@ class AuxFrameworkTests {
             .firstOrNull()
         assertNotNull(dependency)
         assertEquals(dependency.dependency, context.componentFactory().getComponent())
-        Runtime.getRuntime().addShutdownHook(
-            thread(start = false) {
-                context.close()
-            }
-        )
+        application.close()
     }
 
 }

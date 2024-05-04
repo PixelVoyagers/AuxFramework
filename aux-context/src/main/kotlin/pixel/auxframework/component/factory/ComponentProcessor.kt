@@ -6,9 +6,9 @@ import arrow.core.getOrElse
 import kotlinx.coroutines.runBlocking
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.implementation.InvocationHandlerAdapter
-import pixel.auxframework.annotation.Autowired
-import pixel.auxframework.annotation.Component
-import pixel.auxframework.annotation.Qualifier
+import pixel.auxframework.component.annotation.Autowired
+import pixel.auxframework.component.annotation.Component
+import pixel.auxframework.component.annotation.Qualifier
 import pixel.auxframework.context.AuxContext
 import pixel.auxframework.context.builtin.AbstractComponentMethodInvocationHandler
 import pixel.auxframework.util.toClass
@@ -28,7 +28,10 @@ class ComponentProcessingException(message: String, cause: Throwable? = null) : 
 
 open class ComponentProcessor(private val context: AuxContext) {
 
-    open fun initializeComponent(component: ComponentDefinition, stack: MutableList<ComponentDefinition> = mutableListOf()) = component.also {
+    open fun initializeComponent(
+        component: ComponentDefinition,
+        stack: MutableList<ComponentDefinition> = mutableListOf()
+    ) = component.also {
         if (component.isInitialized()) return@also
         try {
             component.setInstance(createComponentInstance(component, stack))
@@ -40,12 +43,19 @@ open class ComponentProcessor(private val context: AuxContext) {
         }
     }
 
-    open fun createInterfaceComponentInstance(component: ComponentDefinition, dependencyStack: MutableList<ComponentDefinition> = mutableListOf()): Any? {
+    open fun createInterfaceComponentInstance(
+        component: ComponentDefinition,
+        dependencyStack: MutableList<ComponentDefinition> = mutableListOf()
+    ): Any? {
         val handler = InvocationHandler { proxy, method, args ->
             val arguments = args ?: emptyArray()
-            val abstractComponentMethodInvocationHandlers = context.componentFactory().getComponents<AbstractComponentMethodInvocationHandler<Any?>>()
+            val abstractComponentMethodInvocationHandlers =
+                context.componentFactory().getComponents<AbstractComponentMethodInvocationHandler<Any?>>()
             val results = abstractComponentMethodInvocationHandlers.filter {
-                it::class.java.genericInterfaces.first { type -> type.toParameterized().rawType.toClass().isSubclassOf(AbstractComponentMethodInvocationHandler::class) }
+                it::class.java.genericInterfaces.first { type ->
+                    type.toParameterized().rawType.toClass()
+                        .isSubclassOf(AbstractComponentMethodInvocationHandler::class)
+                }
                     .toParameterized()
                     .actualTypeArguments.first()
                     .toClass()
@@ -70,17 +80,25 @@ open class ComponentProcessor(private val context: AuxContext) {
             .getConstructor().newInstance()
     }
 
-    open fun createComponentInstance(componentDefinition: ComponentDefinition, dependencyStack: MutableList<ComponentDefinition> = mutableListOf()): Any? {
+    open fun createComponentInstance(
+        componentDefinition: ComponentDefinition,
+        dependencyStack: MutableList<ComponentDefinition> = mutableListOf()
+    ): Any? {
         try {
             if (componentDefinition in dependencyStack) throw StackOverflowError(dependencyStack.joinToString { it.name })
             dependencyStack.add(componentDefinition)
             val instance = when {
-                componentDefinition.type.java.isInterface -> createInterfaceComponentInstance(componentDefinition, dependencyStack)
+                componentDefinition.type.java.isInterface -> createInterfaceComponentInstance(
+                    componentDefinition,
+                    dependencyStack
+                )
+
                 else -> {
                     val constructor = componentDefinition.type.constructors
                         .firstOrNone { it.findAnnotation<Autowired>() != null }
                         .getOrElse { componentDefinition.type.constructors.first() }
-                    val actualArguments = constructor.parameters.associateWith { autowire(it.type, it.annotations, dependencyStack) }
+                    val actualArguments =
+                        constructor.parameters.associateWith { autowire(it.type, it.annotations, dependencyStack) }
                     try {
                         constructor.callBy(actualArguments)
                     } catch (cause: InvocationTargetException) {
@@ -102,7 +120,11 @@ open class ComponentProcessor(private val context: AuxContext) {
         }
     }
 
-    open fun autowire(type: KType, annotations: List<Annotation> = type.annotations, dependencyStack: MutableList<ComponentDefinition> = mutableListOf()): Any? {
+    open fun autowire(
+        type: KType,
+        annotations: List<Annotation> = type.annotations,
+        dependencyStack: MutableList<ComponentDefinition> = mutableListOf()
+    ): Any? {
         val classifier = type.toClass()
         if (classifier.java.isArray) {
             val arrayComponentType = classifier.java.componentType
@@ -128,29 +150,40 @@ open class ComponentProcessor(private val context: AuxContext) {
         }
     }
 
-    open fun autowireComponent(componentDefinition: ComponentDefinition) = initializeComponent(componentDefinition).also {
-        if (componentDefinition.isLoaded()) return@also
-        val instance = componentDefinition.cast<Any>()
-        for (field in instance::class.memberProperties) {
-            if (field.findAnnotation<Autowired>() == null) continue
-            if (field is KMutableProperty<*>) {
-                val autowired = autowire(field.returnType, field.annotations)
-                field.setter.isAccessible = true
-                field.setter.call(instance, autowired)
+    open fun autowireComponent(componentDefinition: ComponentDefinition) =
+        initializeComponent(componentDefinition).also {
+            if (componentDefinition.isLoaded()) return@also
+            val instance = componentDefinition.cast<Any>()
+            for (field in instance::class.memberProperties) {
+                if (field.findAnnotation<Autowired>() == null) continue
+                if (field is KMutableProperty<*>) {
+                    val autowired = autowire(field.returnType, field.annotations)
+                    field.setter.isAccessible = true
+                    field.setter.call(instance, autowired)
+                }
             }
+            val component = componentDefinition.cast<Any>()
+            for (member in component::class.memberFunctions) {
+                member.findAnnotation<Component>() ?: continue
+                val actualArguments = member.parameters.associateWith {
+                    if (it.name == null) component else autowire(
+                        it.type,
+                        it.annotations
+                    )
+                }
+                val invocation = if (member.isSuspend) runBlocking {
+                    member.callSuspendBy(actualArguments)
+                } else member.callBy(actualArguments)
+                if (invocation != null)
+                    context.componentFactory()
+                        .registerComponentDefinition(
+                            ComponentDefinition(
+                                invocation,
+                                name = "${componentDefinition.name}::${member.name}"
+                            )
+                        )
+            }
+            if (instance is AfterComponentAutowired) instance.afterComponentAutowired()
         }
-        val component = componentDefinition.cast<Any>()
-        for (member in component::class.memberFunctions) {
-            member.findAnnotation<Component>() ?: continue
-            val actualArguments = member.parameters.associateWith { if (it.name == null) component else autowire(it.type, it.annotations) }
-            val invocation = if (member.isSuspend) runBlocking {
-                member.callSuspendBy(actualArguments)
-            } else member.callBy(actualArguments)
-            if (invocation != null)
-                context.componentFactory()
-                    .registerComponentDefinition(ComponentDefinition(invocation, name = "${componentDefinition.name}::${member.name}"))
-        }
-        if (instance is AfterComponentAutowired) instance.afterComponentAutowired()
-    }
 
 }

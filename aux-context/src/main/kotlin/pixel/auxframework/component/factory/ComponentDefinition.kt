@@ -10,7 +10,12 @@ import kotlin.reflect.full.isSubclassOf
  */
 open class ComponentDefinition(var name: String, val type: KClass<*>) {
 
-    constructor(instance: Any, name: String = instance::class.java.name, type: KClass<*> = instance::class, loaded: Boolean = true) : this(name, type) {
+    constructor(
+        instance: Any,
+        name: String = instance::class.java.name,
+        type: KClass<*> = instance::class,
+        loaded: Boolean = true
+    ) : this(name, type) {
         this.instance = instance
         this.loaded = loaded
     }
@@ -40,7 +45,8 @@ open class ComponentDefinition(var name: String, val type: KClass<*>) {
     }
 
 
-    open fun isInstance(type: KClass<*>) = (isInitialized() && type.isInstance(cast())) || type == this.type || this.type.isSubclassOf(type)
+    open fun isInstance(type: KClass<*>) =
+        (isInitialized() && type.isInstance(cast())) || type == this.type || this.type.isSubclassOf(type)
 
 }
 

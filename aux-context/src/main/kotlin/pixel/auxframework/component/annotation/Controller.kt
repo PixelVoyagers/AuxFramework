@@ -1,10 +1,10 @@
-package pixel.auxframework.annotation
+package pixel.auxframework.component.annotation
 
 /**
- * 仓库组件
+ * 控制器
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 @Component
 @MustBeDocumented
-annotation class Repository
+annotation class Controller

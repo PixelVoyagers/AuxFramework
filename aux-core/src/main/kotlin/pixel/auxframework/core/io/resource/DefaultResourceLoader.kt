@@ -45,14 +45,17 @@ object ClassFileScanner : Scanner, QueryBuilder, NameHelper {
 
 }
 
-class DefaultResourceLoader(private val classLoader: ClassLoader, private val matcher: PathMatcher = DefaultPathMatcher()) : ResourceLoader {
+class DefaultResourceLoader(
+    private val classLoader: ClassLoader,
+    private val matcher: PathMatcher = DefaultPathMatcher()
+) : ResourceLoader {
 
     fun getMatcher() = matcher
 
     override fun getClassLoader() = classLoader
 
     override fun getResources(pattern: String): List<Resource> {
-        if (!pattern.startsWith("${PathResourceScanner.prefixClasspath}:")) return emptyList()
+        if (!pattern.startsWith("${PathResourceScanner.PREFIX_CLASSPATH}:")) return emptyList()
         val reflections = Reflections(
             ConfigurationBuilder()
                 .forPackages(*classLoader.definedPackages.map { it.name }.toTypedArray())

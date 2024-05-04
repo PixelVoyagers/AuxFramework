@@ -7,8 +7,8 @@ import org.reflections.scanners.Scanners
 import org.reflections.util.ConfigurationBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import pixel.auxframework.annotation.Component
-import pixel.auxframework.annotation.OnlyIn
+import pixel.auxframework.component.annotation.Component
+import pixel.auxframework.component.annotation.OnlyIn
 import pixel.auxframework.component.factory.*
 import pixel.auxframework.context.builtin.AfterContextRefreshed
 import kotlin.reflect.full.findAnnotation
@@ -67,10 +67,10 @@ abstract class AuxContext {
             }
         componentFactory.getAllComponents().map(componentProcessor::autowireComponent)
             .forEach { component ->
-            componentFactory()
-                .getComponents<ComponentPostProcessor>()
-                .forEach { it.processComponent(component) }
-        }
+                componentFactory()
+                    .getComponents<ComponentPostProcessor>()
+                    .forEach { it.processComponent(component) }
+            }
         componentFactory().getComponents<AfterContextRefreshed>().forEach(AfterContextRefreshed::afterContextRefreshed)
     }
 

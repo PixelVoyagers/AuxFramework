@@ -17,7 +17,7 @@ dependencies {
     api("net.bytebuddy:byte-buddy:1.14.14")
     api("org.quartz-scheduler:quartz:2.5.0-rc1")
 
-    runtimeOnly("ch.qos.logback:logback-classic:1.5.6")
+    implementation("ch.qos.logback:logback-classic:1.5.6")
 }
 
 tasks.withType<Test> {

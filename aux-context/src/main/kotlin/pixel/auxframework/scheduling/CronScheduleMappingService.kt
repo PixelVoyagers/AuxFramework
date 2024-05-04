@@ -6,7 +6,7 @@ import net.bytebuddy.implementation.InvocationHandlerAdapter
 import net.bytebuddy.matcher.ElementMatchers
 import org.quartz.*
 import org.quartz.impl.StdSchedulerFactory
-import pixel.auxframework.annotation.Service
+import pixel.auxframework.component.annotation.Service
 import pixel.auxframework.component.factory.ComponentDefinition
 import pixel.auxframework.component.factory.DisposableComponent
 import pixel.auxframework.context.builtin.AfterContextRefreshed
