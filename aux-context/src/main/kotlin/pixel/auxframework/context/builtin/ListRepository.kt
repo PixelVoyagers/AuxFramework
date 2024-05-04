@@ -7,8 +7,26 @@ import pixel.auxframework.annotation.Repository
 import pixel.auxframework.annotation.Service
 import java.lang.reflect.Method
 
+/**
+ * 列表仓库
+ *
+ * ```kotlin
+ * @Repository
+ * interface MyDataRepository : ListRepository {
+ *     fun addData(data: Data)
+ *     fun getAllData(): List<Data>
+ *     fun removeData(data: Data)
+ *     fun removeDataElement(data: Data)
+ *     fun removeDataAt(index: Int)
+ * }
+ * ```
+ * @see SimpleListRepository
+ */
 interface ListRepository
 
+/**
+ * 简单的列表仓库
+ */
 interface SimpleListRepository <T> : ListRepository {
     fun add(element: T)
     fun getAll(): List<T>

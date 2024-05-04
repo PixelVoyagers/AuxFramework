@@ -27,7 +27,7 @@ open class DefaultAuxContext : AuxContext() {
         classLoaders += this::class.java.classLoader
     }
 
-    override val components = DefaultComponentFactory(this)
+    override val componentFactory = DefaultComponentFactory(this)
 
     override val componentProcessor = ComponentProcessor(this)
 

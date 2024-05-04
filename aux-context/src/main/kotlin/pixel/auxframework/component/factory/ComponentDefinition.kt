@@ -3,6 +3,11 @@ package pixel.auxframework.component.factory
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
+/**
+ * 组件定义
+ * @see ComponentFactory
+ * @see ComponentProcessor
+ */
 open class ComponentDefinition(var name: String, val type: KClass<*>) {
 
     constructor(instance: Any, name: String = instance::class.java.name, type: KClass<*> = instance::class, loaded: Boolean = true) : this(name, type) {

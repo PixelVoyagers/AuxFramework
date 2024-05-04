@@ -10,42 +10,71 @@ import org.slf4j.LoggerFactory
 import pixel.auxframework.annotation.Component
 import pixel.auxframework.annotation.OnlyIn
 import pixel.auxframework.component.factory.*
+import pixel.auxframework.context.builtin.AfterContextRefreshed
 import kotlin.reflect.full.findAnnotation
 
-abstract class AuxContext : DisposableComponent {
+/**
+ * 上下文
+ */
+abstract class AuxContext {
 
+    /**
+     * 上下文名称
+     */
     var name: String = this.toString()
+
+    /**
+     * 日志
+     */
     val log: Logger = LoggerFactory.getLogger(this::class.java)
 
+    /**
+     * 上下文类加载器
+     * @see scan
+     */
     val classLoaders = mutableSetOf<ClassLoader>()
-    protected abstract val components: ComponentFactory
+
+    protected abstract val componentFactory: ComponentFactory
     protected abstract val componentProcessor: ComponentProcessor
 
     init {
         classLoaders += this::class.java.classLoader
     }
 
-    fun components() = components
+    /**
+     * 获取组件工厂
+     */
+    fun componentFactory() = componentFactory
 
+    /**
+     * 添加内置组件
+     */
     protected fun appendComponents(list: MutableList<Any>) {
         list.addAll(
             listOf(
-                this, components, componentProcessor
+                this, componentFactory(), componentProcessor
             )
         )
     }
 
+    /**
+     * 刷新
+     */
     open fun refresh() {
-        components.getAllComponents()
+        componentFactory().getAllComponents()
             .map(componentProcessor::initializeComponent)
+        componentFactory.getAllComponents().map(componentProcessor::autowireComponent)
             .forEach { component ->
-                components()
-                    .getComponents<ComponentPostProcessor>()
-                    .forEach { it.processComponent(component) }
-            }
-        components.getAllComponents().map(componentProcessor::autowireComponent)
+            componentFactory()
+                .getComponents<ComponentPostProcessor>()
+                .forEach { it.processComponent(component) }
+        }
+        componentFactory().getComponents<AfterContextRefreshed>().forEach(AfterContextRefreshed::afterContextRefreshed)
     }
 
+    /**
+     * 扫描组件类
+     */
     protected fun scan() {
         for (classLoader in classLoaders) {
             val reflections = Reflections(
@@ -64,30 +93,42 @@ abstract class AuxContext : DisposableComponent {
                     accept
                 }.getOrElse { true }
             }
-            types.forEach { type -> components().registerComponentDefinition(ComponentDefinition(type.kotlin)) }
+            types.forEach { type -> componentFactory().registerComponentDefinition(ComponentDefinition(type.kotlin)) }
         }
     }
 
+    /**
+     * 启动上下文
+     * @see run
+     */
     open fun launch() {
         mutableListOf<Any>().also(::appendComponents)
             .map { ComponentDefinition(it) }
             .map { it.also { it.loaded = true } }
-            .forEach(components::registerComponentDefinition)
+            .forEach(componentFactory()::registerComponentDefinition)
         scan()
         refresh()
     }
 
+    /**
+     * 运行上下文
+     */
     open fun run(vararg args: String) {
-        log.info("Starting...")
         launch()
     }
 
-    override fun dispose() {
-        log.info("Disposed!")
-    }
+    /**
+     * 在上下文挂后执行
+     * @see close
+     */
+    fun dispose() {}
 
+    /**
+     * 关闭上下文
+     */
     fun close() {
-        components.getComponents<DisposableComponent>().forEach(DisposableComponent::dispose)
+        componentFactory().getComponents<DisposableComponent>().forEach(DisposableComponent::dispose)
+        dispose()
     }
 
 }

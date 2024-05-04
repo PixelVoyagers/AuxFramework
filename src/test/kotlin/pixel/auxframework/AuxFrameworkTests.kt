@@ -5,6 +5,7 @@ import pixel.auxframework.annotation.Autowired
 import pixel.auxframework.annotation.Component
 import pixel.auxframework.annotation.OnlyIn
 import pixel.auxframework.component.factory.*
+import pixel.auxframework.context.AuxContext
 import pixel.auxframework.context.DefaultAuxContext
 import kotlin.concurrent.thread
 import kotlin.reflect.jvm.jvmName
@@ -19,6 +20,17 @@ class AuxFrameworkTests {
     @OnlyIn(contextType = [AuxFrameworkTestsContext::class])
     @Component
     class ComponentA : AfterComponentAutowired, PostConstruct {
+
+        @Autowired private lateinit var context: AuxContext
+
+        @Component
+        fun subComponent(): Any {
+            return object : ComponentDefinitionAware {
+                override fun setComponentDefinition(componentDefinition: ComponentDefinition) {
+                    assertEquals(this, componentDefinition.cast())
+                }
+            }
+        }
 
         @Autowired
         private var lazyDependency: ComponentB? = null
@@ -48,14 +60,14 @@ class AuxFrameworkTests {
         val context = AuxFrameworkTestsContext()
         context.name = this::class.jvmName
         context.run()
-        val dependency = context.components()
+        val dependency = context.componentFactory()
             .getAllComponents()
             .filter(ComponentDefinition::isInitialized)
             .map { it.cast<Any>() }
             .filterIsInstance<ComponentB>()
             .firstOrNull()
         assertNotNull(dependency)
-        assertEquals(dependency.dependency, context.components().getComponent())
+        assertEquals(dependency.dependency, context.componentFactory().getComponent())
         Runtime.getRuntime().addShutdownHook(
             thread(start = false) {
                 context.close()
