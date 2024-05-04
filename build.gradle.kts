@@ -5,31 +5,26 @@ plugins {
     id("maven-publish")
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
-
 allprojects {
     repositories {
         mavenCentral()
     }
 
-    tasks.withType<KotlinCompile> {
-        compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(java.targetCompatibility.toString()))
-    }
-
     version = rootProject.version
     group = rootProject.group
 
-
+    tasks.withType<KotlinCompile> {
+        kotlin {
+            jvmToolchain(21)
+        }
+    }
 }
 
 group = "pixel.auxframework"
 version = "1.0.0"
 
 dependencies {
-    api(project(":aux-context"))
+    subprojects.filter { it.name.startsWith("aux-") }.forEach { api(it) }
 }
 
 dependencies {

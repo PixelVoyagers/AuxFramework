@@ -12,6 +12,7 @@ enum class ModuleStatus : BaseStatus {
     IDLE, STARTING, RUNNING, STOPPING, STOPPED;
 
     override fun getStatusName() = this.name.lowercase(Locale.ROOT)
+
 }
 
 /**

@@ -18,10 +18,7 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
-import kotlin.reflect.full.callSuspendBy
-import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.memberFunctions
-import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.*
 import kotlin.reflect.jvm.isAccessible
 
 /**
@@ -48,7 +45,7 @@ open class ComponentProcessor(private val context: AuxContext) {
             val arguments = args ?: emptyArray()
             val abstractComponentMethodInvocationHandlers = context.componentFactory().getComponents<AbstractComponentMethodInvocationHandler<Any?>>()
             val results = abstractComponentMethodInvocationHandlers.filter {
-                it::class.java.genericInterfaces.first()
+                it::class.java.genericInterfaces.first { type -> type.toParameterized().rawType.toClass().isSubclassOf(AbstractComponentMethodInvocationHandler::class) }
                     .toParameterized()
                     .actualTypeArguments.first()
                     .toClass()

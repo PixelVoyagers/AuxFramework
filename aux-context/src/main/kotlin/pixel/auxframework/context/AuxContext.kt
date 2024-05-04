@@ -49,7 +49,7 @@ abstract class AuxContext {
     /**
      * 添加内置组件
      */
-    protected fun appendComponents(list: MutableList<Any>) {
+    protected open fun appendComponents(list: MutableList<Any>) {
         list.addAll(
             listOf(
                 this, componentFactory(), componentProcessor
@@ -77,7 +77,7 @@ abstract class AuxContext {
     /**
      * 扫描组件类
      */
-    protected fun scan() {
+    protected open fun scan() {
         for (classLoader in classLoaders) {
             val reflections = Reflections(
                 ConfigurationBuilder()

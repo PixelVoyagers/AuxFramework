@@ -15,6 +15,7 @@ dependencies {
     api("io.arrow-kt:arrow-core:1.2.4")
     api("io.arrow-kt:arrow-fx-coroutines:1.2.4")
     api("net.bytebuddy:byte-buddy:1.14.14")
+    api("org.quartz-scheduler:quartz:2.5.0-rc1")
 
     runtimeOnly("ch.qos.logback:logback-classic:1.5.6")
 }

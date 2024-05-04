@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    api(project(":aux-core"))
+    api(project(":aux-context"))
 }
 
 dependencies {
