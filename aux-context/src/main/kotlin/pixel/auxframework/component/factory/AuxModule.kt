@@ -11,7 +11,7 @@ import java.util.*
 enum class ModuleStatus : BaseStatus {
     IDLE, STARTING, RUNNING, STOPPING, STOPPED;
 
-    override fun getStatusName() = this.name.toLowerCase(Locale.ROOT)
+    override fun getStatusName() = this.name.lowercase(Locale.ROOT)
 }
 
 /**
