@@ -12,7 +12,7 @@ import org.reflections.util.QueryBuilder
 import org.reflections.util.QueryFunction
 import org.reflections.vfs.Vfs
 import pixel.auxframework.core.io.Resource
-import pixel.auxframework.core.io.URLResource
+import pixel.auxframework.core.io.UrlResource
 import java.util.regex.Pattern
 
 object ClassFileScanner : Scanner, QueryBuilder, NameHelper {
@@ -66,7 +66,7 @@ class DefaultResourceLoader(
             this += reflections.getAll(ClassFileScanner)
         }
         return resourceNames.filter { matcher.matches(it, pattern) }.mapNotNull {
-            classLoader.getResource(it)?.let { resource -> URLResource(resource) }
+            classLoader.getResource(it)?.let { resource -> UrlResource(resource) }
         }
     }
 

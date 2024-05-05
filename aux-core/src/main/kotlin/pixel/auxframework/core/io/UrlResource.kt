@@ -4,7 +4,7 @@ import org.apache.commons.io.FilenameUtils
 import java.io.InputStream
 import java.net.URL
 
-class URLResource(private val url: URL) : Resource {
+class UrlResource(private val url: URL) : Resource {
 
     override fun getPath(): String = url.toString()
     override fun getName(): String = FilenameUtils.getName(url.file)

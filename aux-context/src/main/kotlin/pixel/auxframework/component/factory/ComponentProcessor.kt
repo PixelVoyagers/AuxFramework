@@ -53,13 +53,8 @@ open class ComponentProcessor(private val context: AuxContext) {
                 context.componentFactory().getComponents<AbstractComponentMethodInvocationHandler<Any?>>()
             val results = abstractComponentMethodInvocationHandlers.filter {
                 it::class.java.genericInterfaces.first { type ->
-                    type.toParameterized().rawType.toClass()
-                        .isSubclassOf(AbstractComponentMethodInvocationHandler::class)
-                }
-                    .toParameterized()
-                    .actualTypeArguments.first()
-                    .toClass()
-                    .isInstance(proxy)
+                    type.toParameterized().rawType.toClass().isSubclassOf(AbstractComponentMethodInvocationHandler::class)
+                }.toParameterized().actualTypeArguments.first().toClass().isInstance(proxy)
             }.map {
                 it.handleAbstractComponentMethodInvocation(proxy, method, arguments)
             }

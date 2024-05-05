@@ -16,8 +16,8 @@ interface Banner {
 
         val COLOR_FORMAT = AnsiFormat
             .Builder()
-            .foregroundColor(AnsiColor.Blue)
-            .style(AnsiStyle.Bold)
+            .foregroundColor(AnsiColor.BLUE)
+            .style(AnsiStyle.BOLD)
             .build()
 
         val BANNER = """

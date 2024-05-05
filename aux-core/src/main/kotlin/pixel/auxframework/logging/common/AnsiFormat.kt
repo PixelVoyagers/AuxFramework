@@ -7,8 +7,8 @@ class AnsiFormat(private val builder: Builder) {
     }
 
     data class Builder(
-        val background: Int = AnsiColor.Default.offset,
-        val foreground: Int = AnsiColor.Default.offset,
+        val background: Int = AnsiColor.DEFAULT.offset,
+        val foreground: Int = AnsiColor.DEFAULT.offset,
         val styles: Set<Int> = mutableSetOf()
     ) {
         fun backgroundColor(color: AnsiColor) = copy(background = color.offset)

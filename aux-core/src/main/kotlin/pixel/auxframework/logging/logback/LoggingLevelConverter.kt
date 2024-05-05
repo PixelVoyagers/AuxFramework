@@ -13,10 +13,10 @@ class LoggingLevelConverter : ClassicConverter() {
 
     fun getColorFormat(level: Level): AnsiFormat {
         return when (level.toInt()) {
-            Level.ERROR_INT -> AnsiFormat.Builder().foregroundColor(AnsiColor.Red).style(AnsiStyle.Bold).build()
-            Level.WARN_INT -> AnsiFormat.Builder().foregroundColor(AnsiColor.Yellow).style(AnsiStyle.Bold).build()
-            Level.INFO_INT -> AnsiFormat.Builder().foregroundColor(AnsiColor.Cyan).build()
-            Level.DEBUG_INT -> AnsiFormat.Builder().foregroundColor(AnsiColor.Blue).build()
+            Level.ERROR_INT -> AnsiFormat.Builder().foregroundColor(AnsiColor.RED).style(AnsiStyle.BOLD).build()
+            Level.WARN_INT -> AnsiFormat.Builder().foregroundColor(AnsiColor.YELLOW).style(AnsiStyle.BOLD).build()
+            Level.INFO_INT -> AnsiFormat.Builder().foregroundColor(AnsiColor.CYAN).build()
+            Level.DEBUG_INT -> AnsiFormat.Builder().foregroundColor(AnsiColor.BLUE).build()
             else -> AnsiFormat.Builder().build()
         }
     }
