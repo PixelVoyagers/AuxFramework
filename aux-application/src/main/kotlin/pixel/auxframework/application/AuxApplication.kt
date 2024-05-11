@@ -34,6 +34,7 @@ open class AuxApplication(val builder: AuxApplicationBuilder) {
     fun run(vararg args: String) {
         val timeUsed = measureTime {
             builder.banner.printBanner(context, System.out)
+            context.componentFactory().registerComponentDefinition(ComponentDefinition(builder, loaded = true))
             context.componentFactory().registerComponentDefinition(ComponentDefinition(builder.target!!))
             context.componentFactory().registerComponentDefinition(ComponentDefinition(this, loaded = true))
             context.componentFactory().registerComponentDefinition(

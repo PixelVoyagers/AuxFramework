@@ -11,6 +11,7 @@ import pixel.auxframework.component.annotation.Component
 import pixel.auxframework.component.annotation.OnlyIn
 import pixel.auxframework.component.factory.*
 import pixel.auxframework.context.builtin.AfterContextRefreshed
+import pixel.auxframework.context.builtin.ArgumentsProperty
 import kotlin.reflect.full.findAnnotation
 
 /**
@@ -115,6 +116,7 @@ abstract class AuxContext {
      * 运行上下文
      */
     open fun run(vararg args: String) {
+        componentFactory().registerComponentDefinition(ComponentDefinition(ArgumentsProperty(*args), loaded = true))
         launch()
     }
 
