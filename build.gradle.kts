@@ -6,6 +6,7 @@ plugins {
 }
 
 allprojects {
+
     repositories {
         mavenCentral()
     }
@@ -38,7 +39,7 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-configure<PublishingExtension> {
+publishing {
     publications.create<MavenPublication>("maven") {
         from(components.getByName("kotlin"))
         artifact(tasks.kotlinSourcesJar)

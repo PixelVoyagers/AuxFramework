@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    id("maven-publish")
 }
 
 dependencies {
@@ -22,4 +23,11 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+publishing {
+    publications.create<MavenPublication>("maven") {
+        from(components.getByName("kotlin"))
+        artifact(tasks.kotlinSourcesJar)
+    }
 }
