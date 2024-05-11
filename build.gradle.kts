@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.0.0-RC1"
+    kotlin("jvm") version "2.0.0-RC3"
     id("maven-publish")
 }
 
@@ -10,18 +10,21 @@ allprojects {
         mavenCentral()
     }
 
-    version = rootProject.version
-    group = rootProject.group
-
     tasks.withType<KotlinCompile> {
         kotlin {
             jvmToolchain(21)
         }
     }
+
 }
 
 group = "pixel.auxframework"
 version = "1.0.0"
+
+subprojects {
+    group = rootProject.group
+    version = rootProject.version
+}
 
 dependencies {
     subprojects.filter { it.name.startsWith("aux-") }.forEach { api(it) }
