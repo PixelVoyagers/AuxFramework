@@ -10,7 +10,7 @@ import java.lang.reflect.Method
 /**
  * 列表仓库
  *
- * ```kotlin
+ * ```
  * @Repository
  * interface MyDataRepository : ListRepository {
  *     fun addData(data: Data)

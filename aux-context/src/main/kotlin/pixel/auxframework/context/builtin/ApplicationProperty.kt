@@ -1,5 +1,6 @@
 package pixel.auxframework.context.builtin
 
+import pixel.auxframework.core.AuxVersion
 import kotlin.reflect.KClass
 
 interface ApplicationProperty <T> {
@@ -19,3 +20,5 @@ open class DefaultMutableApplicationProperty<T : Any>(initialize: T, private val
 }
 
 class ArgumentsProperty(vararg arguments: String) : DefaultMutableApplicationProperty<Array<out String>>(arguments)
+class VersionProperty(version: AuxVersion) : DefaultMutableApplicationProperty<AuxVersion>(version)
+

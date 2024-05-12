@@ -6,7 +6,6 @@ plugins {
 }
 
 allprojects {
-
     repositories {
         mavenCentral()
     }
@@ -17,6 +16,11 @@ allprojects {
         }
     }
 
+    tasks.withType<Jar> {
+        manifest {
+            attributes("Implementation-Version" to project.version)
+        }
+    }
 }
 
 group = "pixel.auxframework"

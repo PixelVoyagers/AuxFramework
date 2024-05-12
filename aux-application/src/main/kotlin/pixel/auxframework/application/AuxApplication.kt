@@ -31,17 +31,19 @@ open class AuxApplication(val builder: AuxApplicationBuilder) {
 
     val context = builder.context!!
 
+    protected open fun appendComponents(list: MutableList<ComponentDefinition>) {
+        list.add(ComponentDefinition(builder, loaded = true))
+        list.add(ComponentDefinition(builder.target!!))
+        list.add(ComponentDefinition(this, loaded = true))
+        list.add(ComponentDefinition(DefaultApplicationListener(this), loaded = true))
+    }
+
     fun run(vararg args: String) {
         val timeUsed = measureTime {
+            mutableListOf<ComponentDefinition>()
+                .also(::appendComponents)
+                .forEach(context.componentFactory()::registerComponentDefinition)
             builder.banner.printBanner(context, System.out)
-            context.componentFactory().registerComponentDefinition(ComponentDefinition(builder, loaded = true))
-            context.componentFactory().registerComponentDefinition(ComponentDefinition(builder.target!!))
-            context.componentFactory().registerComponentDefinition(ComponentDefinition(this, loaded = true))
-            context.componentFactory().registerComponentDefinition(
-                ComponentDefinition(
-                    DefaultApplicationListener(this@AuxApplication), loaded = true
-                )
-            )
             context.run(*args)
         }
         context.componentFactory().getComponents<ApplicationListener>().forEach { it.onStart(timeUsed) }
@@ -56,7 +58,7 @@ open class AuxApplication(val builder: AuxApplicationBuilder) {
 
 data class AuxApplicationBuilder(
     val name: String? = null,
-    val target: KClass<*>? = null,
+    val target: KClass<*>? = Any::class,
     val context: ApplicationContext? = null,
     val banner: Banner = Banner
 ) {

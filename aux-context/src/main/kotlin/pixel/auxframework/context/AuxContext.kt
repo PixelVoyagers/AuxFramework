@@ -12,6 +12,8 @@ import pixel.auxframework.component.annotation.OnlyIn
 import pixel.auxframework.component.factory.*
 import pixel.auxframework.context.builtin.AfterContextRefreshed
 import pixel.auxframework.context.builtin.ArgumentsProperty
+import pixel.auxframework.context.builtin.VersionProperty
+import pixel.auxframework.core.AuxVersion
 import kotlin.reflect.full.findAnnotation
 
 /**
@@ -50,10 +52,12 @@ abstract class AuxContext {
     /**
      * 添加内置组件
      */
-    protected open fun appendComponents(list: MutableList<Any>) {
+    protected open fun appendComponents(list: MutableList<ComponentDefinition>) {
         list.addAll(
             listOf(
-                this, componentFactory(), componentProcessor
+                ComponentDefinition(this, loaded = true),
+                ComponentDefinition(componentFactory(), loaded = true),
+                ComponentDefinition(componentProcessor, loaded = true)
             )
         )
     }
@@ -104,9 +108,8 @@ abstract class AuxContext {
      * 启动上下文
      * @see run
      */
-    open fun launch() {
-        mutableListOf<Any>().also(::appendComponents)
-            .map { ComponentDefinition(it, loaded = true) }
+    open fun launch(vararg args: String) {
+        mutableListOf<ComponentDefinition>().also(::appendComponents)
             .forEach(componentFactory()::registerComponentDefinition)
         scan()
         refresh()
@@ -116,8 +119,11 @@ abstract class AuxContext {
      * 运行上下文
      */
     open fun run(vararg args: String) {
-        componentFactory().registerComponentDefinition(ComponentDefinition(ArgumentsProperty(*args), loaded = true))
-        launch()
+        if (!componentFactory().hasComponent<ArgumentsProperty>())
+            componentFactory().registerComponentDefinition(ComponentDefinition(ArgumentsProperty(*args), loaded = true))
+        if (!componentFactory().hasComponent<VersionProperty>())
+            componentFactory().registerComponentDefinition(ComponentDefinition(VersionProperty(AuxVersion.current()), loaded = true))
+        launch(*args)
     }
 
     /**

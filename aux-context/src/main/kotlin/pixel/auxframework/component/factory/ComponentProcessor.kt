@@ -51,18 +51,17 @@ open class ComponentProcessor(private val context: AuxContext) {
             val arguments = args ?: emptyArray()
             val abstractComponentMethodInvocationHandlers =
                 context.componentFactory().getComponents<AbstractComponentMethodInvocationHandler<Any?>>()
-            val results = abstractComponentMethodInvocationHandlers.filter {
+            val handlers = abstractComponentMethodInvocationHandlers.filter {
                 it::class.java.genericInterfaces.first { type ->
                     type.toParameterized().rawType.toClass().isSubclassOf(AbstractComponentMethodInvocationHandler::class)
                 }.toParameterized().actualTypeArguments.first().toClass().isInstance(proxy)
-            }.map {
-                it.handleAbstractComponentMethodInvocation(proxy, method, arguments)
             }
-            val result = results.filterIsInstance<Some<*>>().firstOrNull()
-            if (result == null || result.isNone()) run {
-                if (method.isDefault) method.invoke(proxy, *arguments)
-                else throw UnsupportedOperationException()
-            } else result.getOrNull()
+            for (handler in handlers) {
+                val result = handler.handleAbstractComponentMethodInvocation(proxy, method, arguments)
+                if (result is Some) return@InvocationHandler result.value
+            }
+            if (method.isDefault) method.invoke(proxy, *arguments)
+            else throw UnsupportedOperationException()
         }
         return ByteBuddy()
             .subclass(Any::class.java)

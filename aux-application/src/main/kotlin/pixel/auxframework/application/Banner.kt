@@ -1,5 +1,6 @@
 package pixel.auxframework.application
 
+import pixel.auxframework.core.AuxVersion
 import pixel.auxframework.logging.common.AnsiColor
 import pixel.auxframework.logging.common.AnsiFormat
 import pixel.auxframework.logging.common.AnsiStyle
@@ -14,10 +15,16 @@ interface Banner {
      */
     companion object : Banner {
 
-        val COLOR_FORMAT = AnsiFormat
+        val BANNER_COLOR_FORMAT = AnsiFormat
             .Builder()
             .foregroundColor(AnsiColor.BLUE)
             .style(AnsiStyle.BOLD)
+            .build()
+
+        val VERSION_COLOR_FORMAT = AnsiFormat
+            .Builder()
+            .foregroundColor(AnsiColor.CYAN)
+            .style(AnsiStyle.ITALIC, AnsiStyle.BOLD)
             .build()
 
         val BANNER = """
@@ -28,9 +35,20 @@ interface Banner {
            """.trimIndent().lines()
 
         override fun printBanner(context: ApplicationContext, stream: PrintStream) {
+            if (!context.log.isInfoEnabled) return
             stream.println(
                 BANNER.joinToString("\n") {
-                    COLOR_FORMAT.format(it)
+                    BANNER_COLOR_FORMAT.format(it)
+                }
+            )
+            val versions = listOf(
+                "AuxFramework" to AuxVersion.current().toString(),
+                "Kotlin" to KotlinVersion.CURRENT,
+                "JVM" to System.getProperty("java.vm.version", "<null>")
+            )
+            stream.println(
+                versions.filter { it.second != "<null>" }.joinToString(separator = " ") {
+                    "${VERSION_COLOR_FORMAT.format(it.first)}(${it.second})"
                 }
             )
         }

@@ -99,3 +99,8 @@ inline fun <reified T : Any> ComponentFactory.getComponent() = getComponent(T::c
  * 根据类型获取全部组件
  */
 inline fun <reified T : Any> ComponentFactory.getComponents() = getComponents(T::class)
+
+/**
+ * 判断是否存在某个类型的组件
+ */
+inline fun <reified T : Any> ComponentFactory.hasComponent() = getComponents<T>().isNotEmpty()
