@@ -68,6 +68,8 @@ class RestWebService(private val auxWeb: AuxWeb, private val componentFactory: C
                                         if (result is Some) return@associateWith result.value
                                     }
                                     null
+                                }.filter {
+                                    !(it.key.isOptional && it.value == null)
                                 }
                                 var response: Any? = entry.method.callSuspendBy(arguments)
                                 val responseMappers = componentFactory.getComponents<ResponseMapper>()
