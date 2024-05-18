@@ -11,7 +11,9 @@ class ComponentNotFoundException(message: String? = null, cause: Throwable? = nu
  * 组件工厂
  * @see [pixel.auxframework.context.DefaultComponentFactory]
  */
-abstract class ComponentFactory : DisposableComponent {
+abstract class ComponentFactory {
+
+    open fun dispose() {}
 
     /**
      * 注册组件

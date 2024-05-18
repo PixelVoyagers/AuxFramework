@@ -3,11 +3,17 @@ package pixel.auxframework.component.factory
 import arrow.core.Some
 import arrow.core.firstOrNone
 import arrow.core.getOrElse
+import arrow.core.toOption
 import kotlinx.coroutines.runBlocking
 import net.bytebuddy.ByteBuddy
+import net.bytebuddy.description.method.MethodDescription
 import net.bytebuddy.implementation.InvocationHandlerAdapter
+import org.reflections.Reflections
+import org.reflections.scanners.Scanners
+import org.reflections.util.ConfigurationBuilder
 import pixel.auxframework.component.annotation.Autowired
 import pixel.auxframework.component.annotation.Component
+import pixel.auxframework.component.annotation.OnlyIn
 import pixel.auxframework.component.annotation.Qualifier
 import pixel.auxframework.context.AuxContext
 import pixel.auxframework.context.builtin.AbstractComponentMethodInvocationHandler
@@ -28,13 +34,36 @@ class ComponentProcessingException(message: String, cause: Throwable? = null) : 
 
 open class ComponentProcessor(private val context: AuxContext) {
 
+    open fun scanComponents(classLoaders: Set<ClassLoader>, block: ConfigurationBuilder.() -> Unit = {}) {
+        for (classLoader in classLoaders) {
+            val reflections = Reflections(
+                ConfigurationBuilder()
+                    .forPackages(*classLoader.definedPackages.map { it.name }.toTypedArray())
+                    .addClassLoaders(classLoader)
+                    .setScanners(Scanners.TypesAnnotated)
+                    .also(block)
+            )
+            val types = reflections.getTypesAnnotatedWith(Component::class.java).filter {
+                !it.isAnnotation
+            }.filter {
+                it.kotlin.findAnnotation<OnlyIn>().toOption().map { onlyIn ->
+                    var accept = true
+                    if (onlyIn.contextName != "<null>") accept = accept && context.name == onlyIn.contextName
+                    accept = accept && onlyIn.contextType.all { type -> type.isInstance(context) }
+                    accept
+                }.getOrElse { true }
+            }
+            types.forEach { type -> context.componentFactory().registerComponentDefinition(ComponentDefinition(type.kotlin)) }
+        }
+    }
+
     open fun initializeComponent(
         component: ComponentDefinition,
-        stack: MutableList<ComponentDefinition> = mutableListOf()
+        dependencyStack: MutableList<ComponentDefinition> = mutableListOf()
     ) = component.also {
         if (component.isInitialized()) return@also
         try {
-            component.setInstance(createComponentInstance(component, stack))
+            component.setInstance(createComponentInstance(component, dependencyStack))
         } catch (cause: Throwable) {
             throw ComponentProcessingException(
                 "An error occurred while creating the component '${component.name}'",
@@ -43,14 +72,15 @@ open class ComponentProcessor(private val context: AuxContext) {
         }
     }
 
-    open fun createInterfaceComponentInstance(
+    open fun createAbstractComponentInstance(
         component: ComponentDefinition,
         dependencyStack: MutableList<ComponentDefinition> = mutableListOf()
     ): Any? {
         val handler = InvocationHandler { proxy, method, args ->
             val arguments = args ?: emptyArray()
             val abstractComponentMethodInvocationHandlers =
-                context.componentFactory().getComponents<AbstractComponentMethodInvocationHandler<Any?>>()
+                context.componentFactory().getComponentDefinitions(AbstractComponentMethodInvocationHandler::class.java)
+                    .map { initializeComponent(it).cast<AbstractComponentMethodInvocationHandler<Any?>>() }
             val handlers = abstractComponentMethodInvocationHandlers.filter {
                 it::class.java.genericInterfaces.first { type ->
                     type.toParameterized().rawType.toClass().isSubclassOf(AbstractComponentMethodInvocationHandler::class)
@@ -63,7 +93,7 @@ open class ComponentProcessor(private val context: AuxContext) {
             if (method.isDefault) method.invoke(proxy, *arguments)
             else throw UnsupportedOperationException()
         }
-        return ByteBuddy()
+        val clazz =  if (component.type.java.isInterface) ByteBuddy()
             .subclass(Any::class.java)
             .annotateType(*component.type.annotations.toTypedArray())
             .implement(component.type.java, DynamicComponent::class.java)
@@ -71,7 +101,18 @@ open class ComponentProcessor(private val context: AuxContext) {
             .make()
             .load(component.type.java.classLoader)
             .loaded
-            .getConstructor().newInstance()
+        else ByteBuddy()
+            .subclass(component.type.java)
+            .annotateType(*component.type.annotations.toTypedArray())
+            .implement(DynamicComponent::class.java)
+            .method(MethodDescription::isAbstract)
+            .intercept(InvocationHandlerAdapter.of(handler))
+            .make()
+            .load(component.type.java.classLoader)
+            .loaded
+        val definition = ComponentDefinition(clazz.kotlin)
+        context.componentFactory().registerComponentDefinition(definition)
+        return createComponentInstance(definition, dependencyStack)
     }
 
     open fun createComponentInstance(
@@ -82,17 +123,17 @@ open class ComponentProcessor(private val context: AuxContext) {
             if (componentDefinition in dependencyStack) throw StackOverflowError(dependencyStack.joinToString { it.name })
             dependencyStack.add(componentDefinition)
             val instance = when {
-                componentDefinition.type.java.isInterface -> createInterfaceComponentInstance(
+                componentDefinition.type.java.isInterface || componentDefinition.type.isAbstract -> createAbstractComponentInstance(
                     componentDefinition,
                     dependencyStack
                 )
-
                 else -> {
                     val constructor = componentDefinition.type.constructors
                         .firstOrNone { it.findAnnotation<Autowired>() != null }
                         .getOrElse { componentDefinition.type.constructors.first() }
-                    val actualArguments =
-                        constructor.parameters.associateWith { autowire(it.type, it.annotations, dependencyStack) }
+                    val actualArguments = constructor.parameters
+                        .associateWith { autowire(it.type, it.annotations, dependencyStack) }
+                        .filter { !(it.key.isOptional && it.value == null) }
                     try {
                         constructor.callBy(actualArguments)
                     } catch (cause: InvocationTargetException) {
@@ -119,6 +160,9 @@ open class ComponentProcessor(private val context: AuxContext) {
         annotations: List<Annotation> = type.annotations,
         dependencyStack: MutableList<ComponentDefinition> = mutableListOf()
     ): Any? {
+        for (annotation in annotations) {
+            if (annotation is Autowired && !annotation.enable) return null
+        }
         val classifier = type.toClass()
         if (classifier.java.isArray) {
             val arrayComponentType = classifier.java.componentType

@@ -3,6 +3,11 @@ package pixel.auxframework.core.registry
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.*
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.util.*
 
 object Identifiers {
@@ -51,6 +56,32 @@ object Identifiers {
 
 }
 
+/**
+ * Identifier 序列化器
+ */
+class IdentifierSerializer : JsonSerializer<Identifier>() {
+    override fun serialize(value: Identifier, gen: JsonGenerator, serializers: SerializerProvider) {
+        gen.writeString(value.toString())
+    }
+}
+
+
+/**
+ * [Identifier] 反序列化器
+ */
+class IdentifierDeserializer : JsonDeserializer<Identifier>() {
+    override fun deserialize(p: JsonParser, ctxt: DeserializationContext) = identifierOf(p.valueAsString)
+}
+
+/**
+ * [Identifier]键 反序列化器
+ */
+class IdentifierKeyDeserializer : KeyDeserializer() {
+    override fun deserializeKey(key: String, ctxt: DeserializationContext?) = identifierOf(key)
+}
+
+@JsonDeserialize(using = IdentifierDeserializer::class, keyUsing = IdentifierKeyDeserializer::class)
+@JsonSerialize(using = IdentifierSerializer::class, keyUsing = IdentifierSerializer::class)
 class Identifier(private val namespace: String, path: String) : Iterable<String> {
 
     private val path = path.split("/").filterNot(String::isEmpty).joinToString("/")

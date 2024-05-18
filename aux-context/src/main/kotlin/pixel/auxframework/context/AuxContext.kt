@@ -1,20 +1,12 @@
 package pixel.auxframework.context
 
-import arrow.core.getOrElse
-import arrow.core.toOption
-import org.reflections.Reflections
-import org.reflections.scanners.Scanners
-import org.reflections.util.ConfigurationBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import pixel.auxframework.component.annotation.Component
-import pixel.auxframework.component.annotation.OnlyIn
 import pixel.auxframework.component.factory.*
 import pixel.auxframework.context.builtin.AfterContextRefreshed
 import pixel.auxframework.context.builtin.ArgumentsProperty
 import pixel.auxframework.context.builtin.VersionProperty
 import pixel.auxframework.core.AuxVersion
-import kotlin.reflect.full.findAnnotation
 
 /**
  * 上下文
@@ -83,25 +75,7 @@ abstract class AuxContext {
      * 扫描组件类
      */
     protected open fun scan() {
-        for (classLoader in classLoaders) {
-            val reflections = Reflections(
-                ConfigurationBuilder()
-                    .forPackages(*classLoader.definedPackages.map { it.name }.toTypedArray())
-                    .addClassLoaders(classLoader)
-                    .setScanners(Scanners.TypesAnnotated)
-            )
-            val types = reflections.getTypesAnnotatedWith(Component::class.java).filter {
-                !(it.isAnnotation || (!it.isInterface && it.kotlin.isAbstract))
-            }.filter {
-                it.kotlin.findAnnotation<OnlyIn>().toOption().map { onlyIn ->
-                    var accept = true
-                    if (onlyIn.contextName != "<null>") accept = accept && this@AuxContext.name == onlyIn.contextName
-                    accept = accept && onlyIn.contextType.all { type -> type.isInstance(this@AuxContext) }
-                    accept
-                }.getOrElse { true }
-            }
-            types.forEach { type -> componentFactory().registerComponentDefinition(ComponentDefinition(type.kotlin)) }
-        }
+        componentProcessor.scanComponents(classLoaders)
     }
 
     /**
@@ -130,7 +104,9 @@ abstract class AuxContext {
      * 在上下文挂后执行
      * @see close
      */
-    fun dispose() {}
+    fun dispose() {
+        componentFactory().dispose()
+    }
 
     /**
      * 关闭上下文

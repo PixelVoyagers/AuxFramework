@@ -8,4 +8,4 @@ package pixel.auxframework.component.annotation
  * @see Qualifier
  */
 @Retention(AnnotationRetention.RUNTIME)
-annotation class Autowired
+annotation class Autowired(val enable: Boolean = true)

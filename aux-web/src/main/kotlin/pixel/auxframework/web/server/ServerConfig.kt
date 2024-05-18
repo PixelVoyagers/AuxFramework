@@ -1,8 +1,7 @@
 package pixel.auxframework.web.server
 
+import pixel.auxframework.component.annotation.Autowired
 import pixel.auxframework.component.annotation.Component
 
 @Component
-class ServerConfig {
-    var port = 8080
-}
+data class ServerConfig(@Autowired(false) var port: Int = 8080)
