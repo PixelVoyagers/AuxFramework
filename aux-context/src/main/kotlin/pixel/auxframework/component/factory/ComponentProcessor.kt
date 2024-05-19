@@ -11,10 +11,7 @@ import net.bytebuddy.implementation.InvocationHandlerAdapter
 import org.reflections.Reflections
 import org.reflections.scanners.Scanners
 import org.reflections.util.ConfigurationBuilder
-import pixel.auxframework.component.annotation.Autowired
-import pixel.auxframework.component.annotation.Component
-import pixel.auxframework.component.annotation.OnlyIn
-import pixel.auxframework.component.annotation.Qualifier
+import pixel.auxframework.component.annotation.*
 import pixel.auxframework.context.AuxContext
 import pixel.auxframework.context.builtin.AbstractComponentMethodInvocationHandler
 import pixel.auxframework.util.toClass
@@ -57,13 +54,25 @@ open class ComponentProcessor(private val context: AuxContext) {
         }
     }
 
+    open fun processComponentInstance(componentDefinition: ComponentDefinition, instance: Any?): Any? {
+        val definitions = context.componentFactory().getComponentDefinitions(ComponentInstanceProcessor::class)
+        var result = instance
+        for (definition in definitions) {
+            val processor = definition.castOrNull<ComponentInstanceProcessor>() ?: continue
+            result = processor.processComponentInstance(componentDefinition, result)
+        }
+        return result
+    }
+
     open fun initializeComponent(
         component: ComponentDefinition,
         dependencyStack: MutableList<ComponentDefinition> = mutableListOf()
     ) = component.also {
         if (component.isInitialized()) return@also
         try {
-            component.setInstance(createComponentInstance(component, dependencyStack))
+            component.setInstance(
+                processComponentInstance(component, createComponentInstance(component, dependencyStack))
+            )
         } catch (cause: Throwable) {
             throw ComponentProcessingException(
                 "An error occurred while creating the component '${component.name}'",

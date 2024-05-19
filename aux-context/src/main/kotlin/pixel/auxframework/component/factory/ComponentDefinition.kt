@@ -8,7 +8,7 @@ import kotlin.reflect.full.isSubclassOf
  * @see ComponentFactory
  * @see ComponentProcessor
  */
-open class ComponentDefinition(var name: String, val type: KClass<*>) {
+open class ComponentDefinition(var name: String, var type: KClass<*>) {
 
     constructor(
         instance: Any,

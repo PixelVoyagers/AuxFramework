@@ -38,5 +38,5 @@ out/
 ### Kotlin ###
 .kotlin
 
-# AuxFramework
+### AuxFramework ###
 .auxframework

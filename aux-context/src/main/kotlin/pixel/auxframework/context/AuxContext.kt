@@ -2,11 +2,13 @@ package pixel.auxframework.context
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import pixel.auxframework.component.annotation.Preload
 import pixel.auxframework.component.factory.*
 import pixel.auxframework.context.builtin.AfterContextRefreshed
 import pixel.auxframework.context.builtin.ArgumentsProperty
 import pixel.auxframework.context.builtin.VersionProperty
 import pixel.auxframework.core.AuxVersion
+import kotlin.reflect.full.findAnnotation
 
 /**
  * 上下文
@@ -60,7 +62,13 @@ abstract class AuxContext {
     open fun refresh() {
         componentFactory().getAllComponents()
             .map {
-                componentProcessor.initializeComponent(it)
+                if (it.type.findAnnotation<Preload>()?.enabled == true)
+                    componentProcessor.initializeComponent(it)
+            }
+        componentFactory().getAllComponents()
+            .map {
+                if (it.type.findAnnotation<Preload>()?.enabled != true)
+                    componentProcessor.initializeComponent(it)
             }
         componentFactory.getAllComponents().map(componentProcessor::autowireComponent)
             .forEach { component ->

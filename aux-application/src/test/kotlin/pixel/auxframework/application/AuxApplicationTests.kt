@@ -1,5 +1,6 @@
 package pixel.auxframework.application
 
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import pixel.auxframework.component.annotation.Autowired
@@ -12,7 +13,6 @@ import pixel.auxframework.scheduling.annotation.TimerSchedule
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.jvm.jvmName
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class AuxApplicationTests {
@@ -21,7 +21,7 @@ class AuxApplicationTests {
 
     @OnlyIn(contextType = [AuxFrameworkTestsContext::class])
     @Component
-    class ComponentA : AfterComponentAutowired, PostConstruct {
+    open class ComponentA : AfterComponentAutowired, PostConstruct {
 
         @Autowired
         private lateinit var context: AuxContext
@@ -87,12 +87,7 @@ class AuxApplicationTests {
             .context(context)
             .build()
         application.run()
-        val dependency = context.componentFactory()
-            .getAllComponents()
-            .filter(ComponentDefinition::isInitialized)
-            .map { it.cast<Any>() }
-            .filterIsInstance<ComponentB>()
-            .firstOrNull()
+        val dependency = context.componentFactory().getComponent<ComponentB>()
         assertNotNull(dependency)
         assertEquals(dependency.dependency, context.componentFactory().getComponent())
         application.close()
