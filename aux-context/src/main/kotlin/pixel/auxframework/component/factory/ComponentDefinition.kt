@@ -29,7 +29,6 @@ open class ComponentDefinition(var name: String, var type: KClass<*>) {
     open fun isInitialized(): Boolean = instance != null
 
     fun setInstance(instance: Any?) {
-        if (this.instance != null) throw IllegalStateException("Instance already set")
         this.instance = instance
     }
 

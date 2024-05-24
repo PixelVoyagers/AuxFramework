@@ -42,7 +42,7 @@ open class AuxApplication(val builder: AuxApplicationBuilder) {
         val timeUsed = measureTime {
             mutableListOf<ComponentDefinition>()
                 .also(::appendComponents)
-                .forEach(context.componentFactory()::registerComponentDefinition)
+                .forEach(context.componentFactory()::defineComponent)
             builder.banner.printBanner(context, System.out)
             context.run(*args)
         }

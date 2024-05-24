@@ -30,10 +30,11 @@ interface ScheduleMapping<T : Annotation> {
 @Service
 class SchedulingService(val repository: CompiledSchedulesRepository, val componentFactory: ComponentFactory) :
     ComponentPostProcessor {
-    override fun processComponent(componentDefinition: ComponentDefinition) {
-        val component = (componentDefinition.castOrNull<Any>() ?: return)
+
+    override fun processComponent(componentDefinition: ComponentDefinition, instance: Any?) = instance.also {
+        val component = (componentDefinition.castOrNull<Any>() ?: return@also)
         val componentClass = component::class
-        componentClass.findAnnotation<Scheduled>() ?: return
+        componentClass.findAnnotation<Scheduled>() ?: return@also
         val mappers = mutableMapOf<KClass<*>, MutableSet<ScheduleMapping<Annotation>>>()
         for (mapper in componentFactory.getComponents<ScheduleMapping<Annotation>>()) {
             val type = mapper::class

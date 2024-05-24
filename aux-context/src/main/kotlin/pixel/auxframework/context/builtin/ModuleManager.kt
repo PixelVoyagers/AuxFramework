@@ -13,7 +13,7 @@ interface ModuleRepository : SimpleListRepository<AuxModule>
 @Component
 class ModuleComponentProcessor(private val repository: ModuleRepository) : ComponentPostProcessor {
 
-    override fun processComponent(componentDefinition: ComponentDefinition) {
+    override fun processComponent(componentDefinition: ComponentDefinition, instance: Any?) = instance.also {
         if (componentDefinition.isInstance<AuxModule>()) {
             repository.add(componentDefinition.cast())
         }

@@ -74,7 +74,7 @@ abstract class AuxContext {
             .forEach { component ->
                 componentFactory()
                     .getComponents<ComponentPostProcessor>()
-                    .forEach { it.processComponent(component) }
+                    .forEach { component.setInstance(it.processComponent(component, component.cast())) }
             }
         componentFactory().getComponents<AfterContextRefreshed>().forEach(AfterContextRefreshed::afterContextRefreshed)
     }
@@ -92,7 +92,7 @@ abstract class AuxContext {
      */
     open fun launch(vararg args: String) {
         mutableListOf<ComponentDefinition>().also(::appendComponents)
-            .forEach(componentFactory()::registerComponentDefinition)
+            .forEach(componentFactory()::defineComponent)
         scan()
         refresh()
     }
@@ -102,9 +102,9 @@ abstract class AuxContext {
      */
     open fun run(vararg args: String) {
         if (!componentFactory().hasComponent<ArgumentsProperty>())
-            componentFactory().registerComponentDefinition(ComponentDefinition(ArgumentsProperty(*args), loaded = true))
+            componentFactory().defineComponent(ComponentDefinition(ArgumentsProperty(*args), loaded = true))
         if (!componentFactory().hasComponent<VersionProperty>())
-            componentFactory().registerComponentDefinition(ComponentDefinition(VersionProperty(AuxVersion.current()), loaded = true))
+            componentFactory().defineComponent(ComponentDefinition(VersionProperty(AuxVersion.current()), loaded = true))
         launch(*args)
     }
 

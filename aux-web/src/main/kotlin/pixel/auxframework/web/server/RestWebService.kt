@@ -28,11 +28,11 @@ class RestWebService(private val auxWeb: AuxWeb, private val componentFactory: C
         entries += entry
     }
 
-    override fun processComponent(componentDefinition: ComponentDefinition) {
-        if (!componentDefinition.isInitialized()) return
-        val instance = componentDefinition.castOrNull<Any?>() ?: return
-        val restController = instance::class.findAnnotation<RestController>() ?: return
-        for (mappingFunction in instance::class.memberFunctions) {
+    override fun processComponent(componentDefinition: ComponentDefinition, instance: Any?) = instance.also {
+        if (!componentDefinition.isInitialized()) return@also
+        val componentInstance = componentDefinition.castOrNull<Any?>() ?: return@also
+        val restController = componentInstance::class.findAnnotation<RestController>() ?: return@also
+        for (mappingFunction in componentInstance::class.memberFunctions) {
             val annotations = mappingFunction.findAnnotations(RequestMapping::class)
             for (annotation in annotations) {
                 register(RestRequestMappingEntry(componentDefinition, mappingFunction, restController, annotation))

@@ -50,19 +50,11 @@ open class ComponentProcessor(private val context: AuxContext) {
                     accept
                 }.getOrElse { true }
             }
-            types.forEach { type -> context.componentFactory().registerComponentDefinition(ComponentDefinition(type.kotlin)) }
+            types.forEach { type -> context.componentFactory().defineComponent(ComponentDefinition(type.kotlin)) }
         }
     }
 
-    open fun processComponentInstance(componentDefinition: ComponentDefinition, instance: Any?): Any? {
-        val definitions = context.componentFactory().getComponentDefinitions(ComponentInstanceProcessor::class)
-        var result = instance
-        for (definition in definitions) {
-            val processor = definition.castOrNull<ComponentInstanceProcessor>() ?: continue
-            result = processor.processComponentInstance(componentDefinition, result)
-        }
-        return result
-    }
+    open fun processComponentInstance(componentDefinition: ComponentDefinition, instance: Any?) = instance
 
     open fun initializeComponent(
         component: ComponentDefinition,
@@ -70,6 +62,9 @@ open class ComponentProcessor(private val context: AuxContext) {
     ) = component.also {
         if (component.isInitialized()) return@also
         try {
+            context.componentFactory().getComponents<ComponentDefinitionProcessor>().forEach {
+                it.processComponentDefinition(component)
+            }
             component.setInstance(
                 processComponentInstance(component, createComponentInstance(component, dependencyStack))
             )
@@ -120,7 +115,7 @@ open class ComponentProcessor(private val context: AuxContext) {
             .load(component.type.java.classLoader)
             .loaded
         val definition = ComponentDefinition(clazz.kotlin)
-        context.componentFactory().registerComponentDefinition(definition)
+        context.componentFactory().defineComponent(definition)
         return createComponentInstance(definition, dependencyStack)
     }
 
@@ -223,7 +218,7 @@ open class ComponentProcessor(private val context: AuxContext) {
                 } else member.callBy(actualArguments)
                 if (invocation != null)
                     context.componentFactory()
-                        .registerComponentDefinition(
+                        .defineComponent(
                             ComponentDefinition(
                                 invocation,
                                 name = "${componentDefinition.name}::${member.name}"

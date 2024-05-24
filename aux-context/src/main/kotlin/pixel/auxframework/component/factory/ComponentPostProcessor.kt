@@ -5,6 +5,6 @@ package pixel.auxframework.component.factory
  */
 interface ComponentPostProcessor {
 
-    fun processComponent(componentDefinition: ComponentDefinition)
+    fun processComponent(componentDefinition: ComponentDefinition, instance: Any?) = instance
 
 }

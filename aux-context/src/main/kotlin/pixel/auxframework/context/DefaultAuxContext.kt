@@ -10,7 +10,7 @@ open class DefaultComponentFactory(private val context: AuxContext) : ComponentF
 
     override fun getAllComponents() = container.toSet()
 
-    override fun registerComponentDefinition(componentDefinition: ComponentDefinition) {
+    override fun defineComponent(componentDefinition: ComponentDefinition) {
         container.add(componentDefinition)
     }
 

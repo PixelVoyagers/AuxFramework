@@ -16,9 +16,9 @@ abstract class ComponentFactory {
     open fun dispose() {}
 
     /**
-     * 注册组件
+     * 定义组件
      */
-    abstract fun registerComponentDefinition(componentDefinition: ComponentDefinition)
+    abstract fun defineComponent(componentDefinition: ComponentDefinition)
 
     /**
      * 获取全部组件
