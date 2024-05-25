@@ -54,19 +54,14 @@ open class ComponentProcessor(private val context: AuxContext) {
         }
     }
 
-    open fun processComponentInstance(componentDefinition: ComponentDefinition, instance: Any?) = instance
-
     open fun initializeComponent(
         component: ComponentDefinition,
         dependencyStack: MutableList<ComponentDefinition> = mutableListOf()
     ) = component.also {
         if (component.isInitialized()) return@also
         try {
-            context.componentFactory().getComponents<ComponentDefinitionProcessor>().forEach {
-                it.processComponentDefinition(component)
-            }
             component.setInstance(
-                processComponentInstance(component, createComponentInstance(component, dependencyStack))
+                createComponentInstance(component, dependencyStack)
             )
         } catch (cause: Throwable) {
             throw ComponentProcessingException(
@@ -119,43 +114,40 @@ open class ComponentProcessor(private val context: AuxContext) {
         return createComponentInstance(definition, dependencyStack)
     }
 
+    open fun createConcreteComponentInstance(
+        componentDefinition: ComponentDefinition,
+        dependencyStack: MutableList<ComponentDefinition>
+    ): Any? {
+        val constructor = componentDefinition.type.constructors
+            .firstOrNone { it.findAnnotation<Autowired>() != null }
+            .getOrElse { componentDefinition.type.constructors.first() }
+        val actualArguments = constructor.parameters
+            .associateWith { param -> autowire(param.type, param.annotations, dependencyStack) }
+            .filter { !(it.key.isOptional && it.value == null) }
+        return try {
+            constructor.callBy(actualArguments)
+        } catch (cause: InvocationTargetException) {
+            throw ComponentProcessingException(
+                "An error occurred while constructing component '${componentDefinition.name}' ($constructor)",
+                cause
+            )
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
     open fun createComponentInstance(
         componentDefinition: ComponentDefinition,
         dependencyStack: MutableList<ComponentDefinition> = mutableListOf()
     ): Any? {
-        try {
-            if (componentDefinition in dependencyStack) throw StackOverflowError(dependencyStack.joinToString { it.name })
-            dependencyStack.add(componentDefinition)
-            val instance = when {
-                componentDefinition.type.java.isInterface || componentDefinition.type.isAbstract -> createAbstractComponentInstance(
-                    componentDefinition,
-                    dependencyStack
-                )
-                else -> {
-                    val constructor = componentDefinition.type.constructors
-                        .firstOrNone { it.findAnnotation<Autowired>() != null }
-                        .getOrElse { componentDefinition.type.constructors.first() }
-                    val actualArguments = constructor.parameters
-                        .associateWith { autowire(it.type, it.annotations, dependencyStack) }
-                        .filter { !(it.key.isOptional && it.value == null) }
-                    try {
-                        constructor.callBy(actualArguments)
-                    } catch (cause: InvocationTargetException) {
-                        throw ComponentProcessingException(
-                            "An error occurred while constructing component '${componentDefinition.name}' ($constructor)",
-                            cause
-                        )
-                    }
-                }
-            }
-            return instance.also {
-                if (it is PostConstruct) it.postConstruct()
-            }
-        } catch (cause: StackOverflowError) {
-            throw ComponentProcessingException(
-                "Circular dependency error occurred while creating component '${componentDefinition.name}'",
-                cause
-            )
+        if (componentDefinition in dependencyStack) throw StackOverflowError(dependencyStack.joinToString { it.name })
+        dependencyStack.add(componentDefinition)
+        val instance = when {
+            componentDefinition.type.java.isInterface || componentDefinition.type.isAbstract -> createAbstractComponentInstance(componentDefinition, dependencyStack)
+            else -> createConcreteComponentInstance(componentDefinition, dependencyStack)
+        }
+        return instance.also {
+            if (it is PostConstruct) it.postConstruct()
         }
     }
 
@@ -208,10 +200,7 @@ open class ComponentProcessor(private val context: AuxContext) {
             for (member in component::class.memberFunctions) {
                 member.findAnnotation<Component>() ?: continue
                 val actualArguments = member.parameters.associateWith {
-                    if (it.name == null) component else autowire(
-                        it.type,
-                        it.annotations
-                    )
+                    if (it.name == null) component else autowire(it.type, it.annotations)
                 }
                 val invocation = if (member.isSuspend) runBlocking {
                     member.callSuspendBy(actualArguments)

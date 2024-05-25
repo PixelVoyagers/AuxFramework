@@ -6,12 +6,12 @@ import pixel.auxframework.component.factory.ComponentProcessor
 
 open class DefaultComponentFactory(private val context: AuxContext) : ComponentFactory() {
 
-    internal val container = mutableSetOf<ComponentDefinition>()
+    internal val container = mutableListOf<ComponentDefinition>()
 
     override fun getAllComponents() = container.toSet()
 
     override fun defineComponent(componentDefinition: ComponentDefinition) {
-        container.add(componentDefinition)
+        container += componentDefinition
     }
 
     override fun dispose() {

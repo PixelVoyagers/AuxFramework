@@ -32,15 +32,6 @@ class AuxApplicationTests {
         @Autowired
         private lateinit var componentFactory: ComponentFactory
 
-        @Component
-        fun subComponent(): Any {
-            return object : ComponentDefinitionAware {
-                override fun setComponentDefinition(componentDefinition: ComponentDefinition) {
-                    assertEquals(this, componentDefinition.cast())
-                }
-            }
-        }
-
         @Autowired
         var lazyDependency: ComponentB? = null
 
