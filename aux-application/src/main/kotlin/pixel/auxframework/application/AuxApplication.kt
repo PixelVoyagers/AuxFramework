@@ -9,8 +9,8 @@ import kotlin.time.Duration
 import kotlin.time.measureTime
 
 interface ApplicationListener {
-    fun onClose()
-    fun onStart(timeUsed: Duration)
+    fun onClose() {}
+    fun onStart(timeUsed: Duration) {}
 }
 
 open class DefaultApplicationListener(val application: AuxApplication) : ApplicationListener {
@@ -25,10 +25,11 @@ open class DefaultApplicationListener(val application: AuxApplication) : Applica
 
 }
 
-open class AuxApplication(val builder: AuxApplicationBuilder) {
+open class AuxApplication(private val builder: AuxApplicationBuilder) {
+
+    fun getAuxApplicationBuilder() = builder
 
     val log: Logger = LoggerFactory.getLogger(this::class.java)
-
     val context = builder.context!!
 
     protected open fun appendComponents(list: MutableList<ComponentDefinition>) {
@@ -38,7 +39,7 @@ open class AuxApplication(val builder: AuxApplicationBuilder) {
         list.add(ComponentDefinition(DefaultApplicationListener(this), loaded = true))
     }
 
-    fun run(vararg args: String) {
+    open fun run(vararg args: String) {
         val timeUsed = measureTime {
             mutableListOf<ComponentDefinition>()
                 .also(::appendComponents)
