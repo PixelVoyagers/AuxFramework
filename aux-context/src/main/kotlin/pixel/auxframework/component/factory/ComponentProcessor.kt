@@ -140,6 +140,8 @@ open class ComponentProcessor(private val context: AuxContext) {
         componentDefinition: ComponentDefinition,
         dependencyStack: MutableList<ComponentDefinition> = mutableListOf()
     ): Any? {
+        if (componentDefinition.isLoaded() || componentDefinition.isInitialized()) return componentDefinition.cast()
+        if (componentDefinition.type.findAnnotation<DoNotConstruct>() != null) return null
         if (componentDefinition in dependencyStack) throw StackOverflowError(dependencyStack.joinToString { it.name })
         dependencyStack.add(componentDefinition)
         val instance = when {

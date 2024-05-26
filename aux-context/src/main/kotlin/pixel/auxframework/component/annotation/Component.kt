@@ -17,3 +17,11 @@ annotation class Component
 @MustBeDocumented
 annotation class Preload(val enabled: Boolean = true)
 
+/**
+ * 禁用自动构造
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class DoNotConstruct
+
