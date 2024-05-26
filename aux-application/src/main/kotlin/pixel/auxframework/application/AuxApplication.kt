@@ -29,7 +29,7 @@ open class AuxApplication(private val builder: AuxApplicationBuilder) {
 
     fun getAuxApplicationBuilder() = builder
 
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
+    val log: Logger = LoggerFactory.getLogger(builder.target!!.java)
     val context = builder.context!!
 
     protected open fun appendComponents(list: MutableList<ComponentDefinition>) {
@@ -50,7 +50,7 @@ open class AuxApplication(private val builder: AuxApplicationBuilder) {
         context.componentFactory().getComponents<ApplicationListener>().forEach { it.onStart(timeUsed) }
     }
 
-    fun close() {
+    open fun close() {
         context.componentFactory().getComponents<ApplicationListener>().forEach(ApplicationListener::onClose)
         context.close()
     }
