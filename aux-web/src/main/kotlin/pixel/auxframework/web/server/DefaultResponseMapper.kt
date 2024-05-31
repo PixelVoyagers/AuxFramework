@@ -11,7 +11,15 @@ import java.io.File
 import java.io.InputStream
 import kotlin.reflect.full.createType
 
-data class RawResponse(val rawResponse: Any, val typeInfo: TypeInfo = TypeInfo(rawResponse::class, rawResponse::class.java, rawResponse::class.createType()), val statusCode: HttpStatusCode? = null)
+data class RawResponse(
+    val rawResponse: Any,
+    val typeInfo: TypeInfo = TypeInfo(
+        rawResponse::class,
+        rawResponse::class.java,
+        rawResponse::class.createType()
+    ),
+    val statusCode: HttpStatusCode? = null
+)
 
 @Component
 class DefaultResponseMapper : ResponseMapper {
@@ -30,8 +38,14 @@ class DefaultResponseMapper : ResponseMapper {
                 rawResponse.readAllBytes()
             }
         ) to false
+
         is File -> routingContext.call.respondFile(rawResponse) to false
-        is RawResponse -> routingContext.call.respond(rawResponse.statusCode ?: HttpStatusCode.OK, rawResponse.rawResponse, rawResponse.typeInfo) to false
+        is RawResponse -> routingContext.call.respond(
+            rawResponse.statusCode ?: HttpStatusCode.OK,
+            rawResponse.rawResponse,
+            rawResponse.typeInfo
+        ) to false
+
         else -> rawResponse to true
     }
 

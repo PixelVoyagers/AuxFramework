@@ -8,10 +8,11 @@ import pixel.auxframework.web.server.RestRequestMappingEntry
 import kotlin.reflect.KParameter
 
 
-class AuxWebRequest(private val entry: RestRequestMappingEntry,
-                    private val controllerRouter: Route,
-                    private val mappingRoute: Route,
-                    private val routingContext: RoutingContext
+class AuxWebRequest(
+    private val entry: RestRequestMappingEntry,
+    private val controllerRouter: Route,
+    private val mappingRoute: Route,
+    private val routingContext: RoutingContext
 ) {
     fun queryParameter(name: String) = routingContext.call.queryParameters[name]
     fun queryParameter(name: String, default: () -> String) = queryParameter(name) ?: default()

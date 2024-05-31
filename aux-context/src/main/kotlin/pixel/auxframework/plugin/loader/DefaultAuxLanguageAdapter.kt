@@ -8,7 +8,10 @@ class DefaultAuxLanguageAdapter : AuxLanguageAdapter {
 
     override fun getIdentifier() = Identifier("auxframework", "default")
     override fun createClassLoader(plugin: AuxPlugin) =
-        AuxPluginClassLoader(plugin, *plugin.getPluginFile()?.toURI()?.toURL()?.let { arrayOf(it) } ?: emptyArray(), parent = this::class.java.classLoader)
+        AuxPluginClassLoader(
+            plugin,
+            *plugin.getPluginFile()?.toURI()?.toURL()?.let { arrayOf(it) } ?: emptyArray(),
+            parent = this::class.java.classLoader)
 
     override suspend fun disposePlugin(plugin: AuxPlugin) {}
     override suspend fun initializePlugin(plugin: AuxPlugin) {}

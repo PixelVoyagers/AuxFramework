@@ -104,7 +104,12 @@ abstract class AuxContext {
         if (!componentFactory().hasComponent<ArgumentsProperty>())
             componentFactory().defineComponent(ComponentDefinition(ArgumentsProperty(*args), loaded = true))
         if (!componentFactory().hasComponent<VersionProperty>())
-            componentFactory().defineComponent(ComponentDefinition(VersionProperty(AuxVersion.current()), loaded = true))
+            componentFactory().defineComponent(
+                ComponentDefinition(
+                    VersionProperty(AuxVersion.current()),
+                    loaded = true
+                )
+            )
         launch(*args)
     }
 

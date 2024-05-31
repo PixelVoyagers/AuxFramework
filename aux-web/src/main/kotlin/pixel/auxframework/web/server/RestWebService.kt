@@ -17,10 +17,16 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.*
 
-data class RestRequestMappingEntry(val componentDefinition: ComponentDefinition, val method: KFunction<*>, val restController: RestController, val requestMapping: RequestMapping)
+data class RestRequestMappingEntry(
+    val componentDefinition: ComponentDefinition,
+    val method: KFunction<*>,
+    val restController: RestController,
+    val requestMapping: RequestMapping
+)
 
 @Service
-class RestWebService(private val auxWeb: AuxWeb, private val componentFactory: ComponentFactory) : InitializeWebServer, ComponentPostProcessor {
+class RestWebService(private val auxWeb: AuxWeb, private val componentFactory: ComponentFactory) : InitializeWebServer,
+    ComponentPostProcessor {
 
     val entries = mutableListOf<RestRequestMappingEntry>()
 
@@ -40,7 +46,7 @@ class RestWebService(private val auxWeb: AuxWeb, private val componentFactory: C
         }
     }
 
-    override fun initializeWebServer()  {
+    override fun initializeWebServer() {
         auxWeb.getWebApplication().application.routing {
             for (entry in entries) {
                 for (root in entry.restController.roots) {
@@ -57,7 +63,10 @@ class RestWebService(private val auxWeb: AuxWeb, private val componentFactory: C
                                     val mappers = componentFactory.getComponents<RequestMapper<*>>()
                                         .filter { mapper ->
                                             mapper::class.java.genericInterfaces
-                                                .first { type -> type.toParameterized().rawType.toClass().isSubclassOf(RequestMapper::class) }
+                                                .first { type ->
+                                                    type.toParameterized().rawType.toClass()
+                                                        .isSubclassOf(RequestMapper::class)
+                                                }
                                                 .toParameterized()
                                                 .actualTypeArguments.first()
                                                 .toClass()

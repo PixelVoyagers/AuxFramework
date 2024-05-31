@@ -88,7 +88,8 @@ abstract class ComponentFactory {
     /**
      * 根据类型获取全部组件
      */
-    open fun <T : Any> getComponents(type: KClass<T>) = getComponentDefinitions(type.java).filter(ComponentDefinition::isInitialized) .map { it.cast<T>() }
+    open fun <T : Any> getComponents(type: KClass<T>) =
+        getComponentDefinitions(type.java).filter(ComponentDefinition::isInitialized).map { it.cast<T>() }
 
 }
 

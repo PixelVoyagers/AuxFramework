@@ -11,7 +11,8 @@ import pixel.auxframework.web.server.InitializeWebServer
 import pixel.auxframework.web.server.ServerConfig
 
 @Service
-class AuxWeb(private val componentFactory: ComponentFactory, private val config: ServerConfig) : AfterContextRefreshed, DisposableComponent {
+class AuxWeb(private val componentFactory: ComponentFactory, private val config: ServerConfig) : AfterContextRefreshed,
+    DisposableComponent {
 
     private var webApplication: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
     fun getWebApplicationOrNull() = webApplication

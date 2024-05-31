@@ -5,6 +5,7 @@ import com.google.common.base.Objects
 object FunctionUtils {
 
     private val memory: MutableMap<String, Any?> = mutableMapOf()
+
     @Suppress("UNCHECKED_CAST")
     fun <T> memorize(vararg seeds: Any?, block: () -> T): T {
         val stack = Throwable().stackTrace

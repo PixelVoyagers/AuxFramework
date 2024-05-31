@@ -11,7 +11,9 @@ class AuxVersion(val version: String) {
     }
 
     override fun hashCode() = version.hashCode()
-    override fun equals(other: Any?) = other === this || (other != null && other is AuxVersion && other.version == this.version)
+    override fun equals(other: Any?) =
+        other === this || (other != null && other is AuxVersion && other.version == this.version)
+
     override fun toString() = version
 
 }

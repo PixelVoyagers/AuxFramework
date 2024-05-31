@@ -3,7 +3,8 @@ package pixel.auxframework.plugin.loader
 import java.net.URL
 import java.net.URLClassLoader
 
-open class AuxPluginClassLoader(val plugin: AuxPlugin, vararg urls: URL, parent: ClassLoader? = null) : URLClassLoader(urls, parent) {
+open class AuxPluginClassLoader(val plugin: AuxPlugin, vararg urls: URL, parent: ClassLoader? = null) :
+    URLClassLoader(urls, parent) {
 
     companion object {
 

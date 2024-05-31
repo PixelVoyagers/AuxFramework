@@ -5,7 +5,7 @@ import pixel.auxframework.core.runtime.status.StatusSupplier
 import java.util.*
 
 /**
- * 模块装填
+ * 模块状态
  * @see AuxModuleStatusSupplier
  */
 enum class ModuleStatus : BaseStatus {
@@ -16,7 +16,7 @@ enum class ModuleStatus : BaseStatus {
 }
 
 /**
- * 模块装填供应器
+ * 模块状态供应器
  * @see AuxModule
  */
 interface AuxModuleStatusSupplier : StatusSupplier<BaseStatus>

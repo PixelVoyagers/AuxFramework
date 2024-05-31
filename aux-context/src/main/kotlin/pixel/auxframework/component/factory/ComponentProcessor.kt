@@ -19,6 +19,7 @@ import pixel.auxframework.util.toParameterized
 import java.lang.reflect.Array
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
+import java.util.*
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.*
@@ -75,6 +76,10 @@ open class ComponentProcessor(private val context: AuxContext) {
         component: ComponentDefinition,
         dependencyStack: MutableList<ComponentDefinition> = mutableListOf()
     ): Any? {
+        if (component.type.findAnnotation<Service>() != null) {
+            val loaded = ServiceLoader.load(component.type.java).firstOrNull()
+            if (loaded != null) return loaded
+        }
         val handler = InvocationHandler { proxy, method, args ->
             val arguments = args ?: emptyArray()
             val abstractComponentMethodInvocationHandlers =
@@ -82,7 +87,8 @@ open class ComponentProcessor(private val context: AuxContext) {
                     .map { initializeComponent(it).cast<AbstractComponentMethodInvocationHandler<Any?>>() }
             val handlers = abstractComponentMethodInvocationHandlers.filter {
                 it::class.java.genericInterfaces.first { type ->
-                    type.toParameterized().rawType.toClass().isSubclassOf(AbstractComponentMethodInvocationHandler::class)
+                    type.toParameterized().rawType.toClass()
+                        .isSubclassOf(AbstractComponentMethodInvocationHandler::class)
                 }.toParameterized().actualTypeArguments.first().toClass().isInstance(proxy)
             }
             for (handler in handlers) {
@@ -92,7 +98,7 @@ open class ComponentProcessor(private val context: AuxContext) {
             if (method.isDefault) method.invoke(proxy, *arguments)
             else throw UnsupportedOperationException()
         }
-        val clazz =  if (component.type.java.isInterface) ByteBuddy()
+        val clazz = if (component.type.java.isInterface) ByteBuddy()
             .subclass(Any::class.java)
             .annotateType(*component.type.annotations.toTypedArray())
             .implement(component.type.java, DynamicComponent::class.java)
@@ -145,7 +151,11 @@ open class ComponentProcessor(private val context: AuxContext) {
         if (componentDefinition in dependencyStack) throw StackOverflowError(dependencyStack.joinToString { it.name })
         dependencyStack.add(componentDefinition)
         val instance = when {
-            componentDefinition.type.java.isInterface || componentDefinition.type.isAbstract -> createAbstractComponentInstance(componentDefinition, dependencyStack)
+            componentDefinition.type.java.isInterface || componentDefinition.type.isAbstract -> createAbstractComponentInstance(
+                componentDefinition,
+                dependencyStack
+            )
+
             else -> createConcreteComponentInstance(componentDefinition, dependencyStack)
         }
         return instance.also {

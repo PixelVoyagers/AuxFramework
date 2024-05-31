@@ -11,7 +11,12 @@ import java.util.zip.ZipFile
 
 class AuxPluginMetadata(private val file: File) {
 
-    data class Metadata(private val name: String = "", private val version: String = "", private val dependencies: List<String> = mutableListOf(), private val languageAdapter: String? = null) {
+    data class Metadata(
+        private val name: String = "",
+        private val version: String = "",
+        private val dependencies: List<String> = mutableListOf(),
+        private val languageAdapter: String? = null
+    ) {
         fun getName() = name
         fun getVersion() = version
         fun getDependencies(): List<Pair<String, VersionRange>> = dependencies.map {
@@ -20,6 +25,7 @@ class AuxPluginMetadata(private val file: File) {
         }.toMutableList().apply {
             add(getLanguageAdapter().getNamespace() to VersionRange(Range.all()))
         }
+
         fun getLanguageAdapter() = languageAdapter?.let {
             Identifiers.parseOrThrow(it, defaultNamespace = "auxframework")
         } ?: Identifier("auxframework", "default")
@@ -35,7 +41,11 @@ class AuxPluginMetadata(private val file: File) {
 
 }
 
-class AuxPlugin(private val metadata: AuxPluginMetadata.Metadata, internal var initialized: Boolean = false, internal var languageAdapter: AuxLanguageAdapter? = null) {
+class AuxPlugin(
+    private val metadata: AuxPluginMetadata.Metadata,
+    internal var initialized: Boolean = false,
+    internal var languageAdapter: AuxLanguageAdapter? = null
+) {
 
     fun isInitialized() = initialized
     internal var file: File? = null

@@ -11,10 +11,12 @@ import pixel.auxframework.web.server.RestRequestMappingEntry
 import java.time.temporal.Temporal
 import kotlin.reflect.KParameter
 
-class AuxWebResponse(private val entry: RestRequestMappingEntry,
-                     private val controllerRouter: Route,
-                     private val mappingRoute: Route,
-                     private val routingContext: RoutingContext) {
+class AuxWebResponse(
+    private val entry: RestRequestMappingEntry,
+    private val controllerRouter: Route,
+    private val mappingRoute: Route,
+    private val routingContext: RoutingContext
+) {
 
     var statusCode: HttpStatusCode?
         set(value) {
@@ -31,11 +33,12 @@ class AuxWebResponse(private val entry: RestRequestMappingEntry,
     fun header() = routingContext.call.response.headers
     fun cookie() = routingContext.call.response.cookies
 
-    suspend fun respondJson(code: HttpStatusCode = HttpStatusCode.OK, block: () -> Any?) = routingContext.call.respondBytes(
-        status = code,
-        contentType = ContentType.Application.Json,
-        bytes = jacksonObjectMapper().writeValueAsBytes(block())
-    )
+    suspend fun respondJson(code: HttpStatusCode = HttpStatusCode.OK, block: () -> Any?) =
+        routingContext.call.respondBytes(
+            status = code,
+            contentType = ContentType.Application.Json,
+            bytes = jacksonObjectMapper().writeValueAsBytes(block())
+        )
 
 }
 

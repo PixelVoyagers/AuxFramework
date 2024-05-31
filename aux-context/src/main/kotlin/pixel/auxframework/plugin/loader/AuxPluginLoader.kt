@@ -13,16 +13,24 @@ import pixel.auxframework.core.AuxVersion
 import pixel.auxframework.core.registry.Identifier
 import java.io.File
 
-open class PluginInitializingException(message: String? = null, cause: Throwable? = null) : RuntimeException(message, cause)
+open class PluginInitializingException(message: String? = null, cause: Throwable? = null) :
+    RuntimeException(message, cause)
 
 @Component
 data class AuxPluginLoaderConfig(@Autowired(false) var directories: MutableList<File> = mutableListOf())
 
 @Repository
-abstract class AuxPluginContainer(private val defaultAuxLanguageAdapter: DefaultAuxLanguageAdapter) : SimpleListRepository<AuxPlugin>, PostConstruct, DisposableComponent {
+abstract class AuxPluginContainer(private val defaultAuxLanguageAdapter: DefaultAuxLanguageAdapter) :
+    SimpleListRepository<AuxPlugin>, PostConstruct, DisposableComponent {
 
     override fun postConstruct() {
-        add(AuxPlugin(AuxPluginMetadata.Metadata(name = "auxframework", version = AuxVersion.current().version), initialized = true, languageAdapter = defaultAuxLanguageAdapter))
+        add(
+            AuxPlugin(
+                AuxPluginMetadata.Metadata(name = "auxframework", version = AuxVersion.current().version),
+                initialized = true,
+                languageAdapter = defaultAuxLanguageAdapter
+            )
+        )
     }
 
     fun getPluginByName(pluginName: String) = getAll().firstOrNull { it.getPluginMetadata().getName() == pluginName }
@@ -40,7 +48,12 @@ abstract class AuxPluginContainer(private val defaultAuxLanguageAdapter: Default
 }
 
 @Service
-open class AuxPluginLoader(private val defaultAuxLanguageAdapter: DefaultAuxLanguageAdapter, private val componentProcessor: ComponentProcessor, private val componentFactory: ComponentFactory, private val container: AuxPluginContainer) {
+open class AuxPluginLoader(
+    private val defaultAuxLanguageAdapter: DefaultAuxLanguageAdapter,
+    private val componentProcessor: ComponentProcessor,
+    private val componentFactory: ComponentFactory,
+    private val container: AuxPluginContainer
+) {
 
     fun getConfig() = componentFactory.getComponent<AuxPluginLoaderConfig>()
 
@@ -67,34 +80,57 @@ open class AuxPluginLoader(private val defaultAuxLanguageAdapter: DefaultAuxLang
         }
     }
 
-    suspend fun getLanguageAdapter(identifier: Identifier, dependencyStack: MutableList<AuxPlugin> = mutableListOf()): AuxLanguageAdapter {
+    suspend fun getLanguageAdapter(
+        identifier: Identifier,
+        dependencyStack: MutableList<AuxPlugin> = mutableListOf()
+    ): AuxLanguageAdapter {
         if (identifier == defaultAuxLanguageAdapter.getIdentifier()) return defaultAuxLanguageAdapter
         val adapters = componentFactory.getComponents<AuxLanguageAdapter>()
         val found = adapters.firstOrNull { it.getIdentifier() == identifier }
         if (found != null) return found
-        val plugin = container.getPluginByName(identifier.getNamespace()) ?: throw PluginInitializingException("Plugin not found: '${identifier.getNamespace()}'")
+        val plugin = container.getPluginByName(identifier.getNamespace())
+            ?: throw PluginInitializingException("Plugin not found: '${identifier.getNamespace()}'")
         if (!plugin.isInitialized()) {
             dependencyStack += plugin
-            initializePlugin(plugin, getLanguageAdapter(plugin.getPluginMetadata().getLanguageAdapter(), dependencyStack))
+            initializePlugin(
+                plugin,
+                getLanguageAdapter(plugin.getPluginMetadata().getLanguageAdapter(), dependencyStack)
+            )
         }
-        return componentFactory.getComponents<AuxLanguageAdapter>().firstOrNull { it.getIdentifier() == identifier } ?: throw PluginInitializingException("Undefined language adapter: '${identifier.getNamespace()}'")
+        return componentFactory.getComponents<AuxLanguageAdapter>().firstOrNull { it.getIdentifier() == identifier }
+            ?: throw PluginInitializingException("Undefined language adapter: '${identifier.getNamespace()}'")
     }
 
-    suspend fun initializePlugin(plugin: AuxPlugin, adapter: AuxLanguageAdapter, dependencyStack: MutableList<AuxPlugin> = mutableListOf()) {
+    suspend fun initializePlugin(
+        plugin: AuxPlugin,
+        adapter: AuxLanguageAdapter,
+        dependencyStack: MutableList<AuxPlugin> = mutableListOf()
+    ) {
         plugin.languageAdapter = adapter
         if (dependencyStack.contains(plugin)) {
-            val stackOverFlowError = StackOverflowError(dependencyStack.joinToString { it.getPluginMetadata().getName() })
+            val stackOverFlowError =
+                StackOverflowError(dependencyStack.joinToString { it.getPluginMetadata().getName() })
             throw PluginInitializingException(
-                "Circular dependency error occurred while initializing plugin '${plugin.getPluginMetadata().getName()}'",
+                "Circular dependency error occurred while initializing plugin '${
+                    plugin.getPluginMetadata().getName()
+                }'",
                 stackOverFlowError
             )
         }
         dependencyStack += plugin
         if (plugin.isInitialized()) return
         for (dependency in plugin.getPluginMetadata().getDependencies()) {
-            val dependencyPlugin = container.getPluginByName(dependency.first) ?: throw PluginInitializingException("Plugin not found: '${dependency.first}'")
+            val dependencyPlugin = container.getPluginByName(dependency.first)
+                ?: throw PluginInitializingException("Plugin not found: '${dependency.first}'")
             if (!dependencyPlugin.isInitialized()) {
-                initializePlugin(dependencyPlugin, getLanguageAdapter(dependencyPlugin.getPluginMetadata().getLanguageAdapter(), dependencyStack = dependencyStack), dependencyStack)
+                initializePlugin(
+                    dependencyPlugin,
+                    getLanguageAdapter(
+                        dependencyPlugin.getPluginMetadata().getLanguageAdapter(),
+                        dependencyStack = dependencyStack
+                    ),
+                    dependencyStack
+                )
             }
         }
         plugin.classLoader = adapter.createClassLoader(plugin)

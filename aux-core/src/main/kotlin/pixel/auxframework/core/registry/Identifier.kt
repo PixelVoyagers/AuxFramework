@@ -118,5 +118,6 @@ class Identifier(private val namespace: String, path: String) : Iterable<String>
 
 }
 
-fun identifierOf(identifier: String, defaultNamespace: String? = null) = Identifiers.parseOrThrow(identifier, defaultNamespace)
+fun identifierOf(identifier: String, defaultNamespace: String? = null) =
+    Identifiers.parseOrThrow(identifier, defaultNamespace)
 
