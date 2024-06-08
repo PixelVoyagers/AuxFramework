@@ -2,6 +2,7 @@ package pixel.auxframework.core.io.resource
 
 import pixel.auxframework.core.io.FileSystemResource
 import pixel.auxframework.core.io.Resource
+import java.io.File
 import java.net.URI
 import java.nio.file.Path
 
@@ -15,6 +16,12 @@ class PathResourceScanner(
     companion object {
         const val PREFIX_CLASSPATH = "classpath"
         const val PREFIX_FILE = "file"
+    }
+
+    override fun getResource(name: String): Resource? {
+        return if (name.startsWith("$PREFIX_FILE:")) FileSystemResource(File(name.removePrefix("$PREFIX_FILE:")))
+        else if (name.startsWith("$PREFIX_CLASSPATH:")) resourceLoader.getResource(name)
+        else null
     }
 
     override fun getResources(pattern: String): List<Resource> {

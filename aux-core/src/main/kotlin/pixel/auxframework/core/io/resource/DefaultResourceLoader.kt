@@ -54,6 +54,12 @@ class DefaultResourceLoader(
 
     override fun getClassLoader() = classLoader
 
+    override fun getResource(name: String): Resource? {
+        if (!name.startsWith("${PathResourceScanner.PREFIX_CLASSPATH}:")) return null
+        val resource = classLoader.getResource(name.removePrefix("${PathResourceScanner.PREFIX_CLASSPATH}:")) ?: return null
+        return UrlResource(resource)
+    }
+
     override fun getResources(pattern: String): List<Resource> {
         if (!pattern.startsWith("${PathResourceScanner.PREFIX_CLASSPATH}:")) return emptyList()
         val reflections = Reflections(
