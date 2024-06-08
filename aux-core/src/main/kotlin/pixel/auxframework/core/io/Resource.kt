@@ -6,7 +6,7 @@ import java.net.URL
 interface Resource {
     fun canRead(): Boolean
     fun isOpen(): Boolean
-    fun getURL(): URL
+    fun getUrl(): URL
     fun getName(): String
     fun getPath(): String
     fun inputStream(): InputStream

@@ -1,7 +1,6 @@
 package pixel.auxframework.scheduling
 
-import pixel.auxframework.component.annotation.Repository
-import pixel.auxframework.component.annotation.Service
+import pixel.auxframework.component.annotation.*
 import pixel.auxframework.component.factory.ComponentDefinition
 import pixel.auxframework.component.factory.ComponentFactory
 import pixel.auxframework.component.factory.ComponentPostProcessor
@@ -16,6 +15,10 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.memberFunctions
 
+@Preload
+@Component
+data class SchedulingConfig(@Autowired(false) var enabled: Boolean = true)
+
 @Repository
 interface CompiledSchedulesRepository : SimpleListRepository<CompiledSchedule>
 
@@ -28,10 +31,14 @@ interface ScheduleMapping<T : Annotation> {
 }
 
 @Service
-class SchedulingService(val repository: CompiledSchedulesRepository, val componentFactory: ComponentFactory) :
-    ComponentPostProcessor {
+class SchedulingService(
+    val repository: CompiledSchedulesRepository,
+    val componentFactory: ComponentFactory,
+    val config: SchedulingConfig
+) : ComponentPostProcessor {
 
     override fun processComponent(componentDefinition: ComponentDefinition, instance: Any?) = instance.also {
+        if (!config.enabled) return@also
         val component = (componentDefinition.castOrNull<Any>() ?: return@also)
         val componentClass = component::class
         componentClass.findAnnotation<Scheduled>() ?: return@also
