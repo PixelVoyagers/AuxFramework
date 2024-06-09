@@ -28,7 +28,7 @@ abstract class AuxPluginContainer(private val defaultAuxLanguageAdapter: Default
             AuxPlugin(
                 AuxPluginMetadata.Metadata(name = "auxframework", version = AuxVersion.current().version),
                 initialized = true,
-                languageAdapter = defaultAuxLanguageAdapter
+                languageAdapter = defaultAuxLanguageAdapter,
             )
         )
     }
