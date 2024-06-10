@@ -3,15 +3,13 @@ package pixel.auxframework.plugin.loader
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import pixel.auxframework.component.annotation.Autowired
-import pixel.auxframework.component.annotation.Component
-import pixel.auxframework.component.annotation.Repository
-import pixel.auxframework.component.annotation.Service
+import pixel.auxframework.component.annotation.*
 import pixel.auxframework.component.factory.*
 import pixel.auxframework.context.builtin.SimpleListRepository
 import pixel.auxframework.core.AuxVersion
 import pixel.auxframework.core.registry.Identifier
 import java.io.File
+import kotlin.reflect.full.findAnnotation
 
 open class PluginInitializingException(message: String? = null, cause: Throwable? = null) :
     RuntimeException(message, cause)
@@ -53,7 +51,25 @@ open class AuxPluginLoader(
     private val componentProcessor: ComponentProcessor,
     private val componentFactory: ComponentFactory,
     private val container: AuxPluginContainer
-) {
+) : PostContextRefresh {
+
+    override fun postContextRefresh() = runBlocking {
+        initializePlugins(scanPlugins())
+        val definitions = mutableSetOf<ComponentDefinition>()
+        for (plugin in container.getAll()) runBlocking {
+            plugin.classes.forEach {
+                val definition = ComponentDefinition(type = it)
+                componentFactory.defineComponent(definition)
+                definitions += definition
+            }
+        }
+        definitions.forEach {
+            if (it.type.findAnnotation<Preload>()?.enabled == true) componentProcessor.initializeComponent(it)
+        }
+        definitions.forEach {
+            if (it.type.findAnnotation<Preload>()?.enabled != true) componentProcessor.initializeComponent(it)
+        }
+    }
 
     fun getConfig() = componentFactory.getComponent<AuxPluginLoaderConfig>()
 

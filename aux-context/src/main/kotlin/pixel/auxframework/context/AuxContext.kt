@@ -61,15 +61,17 @@ abstract class AuxContext {
      */
     open fun refresh() {
         componentFactory().getAllComponents()
-            .map {
+            .forEach {
                 if (it.type.findAnnotation<Preload>()?.enabled == true)
                     componentProcessor.initializeComponent(it)
             }
         componentFactory().getAllComponents()
-            .map {
+            .forEach {
                 if (it.type.findAnnotation<Preload>()?.enabled != true)
                     componentProcessor.initializeComponent(it)
             }
+        componentFactory().getComponents<BeforeContextRefresh>().forEach(BeforeContextRefresh::beforeContextRefresh)
+        componentFactory().getComponents<PostContextRefresh>().forEach(PostContextRefresh::postContextRefresh)
         componentFactory.getAllComponents().map(componentProcessor::autowireComponent)
             .forEach { component ->
                 componentFactory()
