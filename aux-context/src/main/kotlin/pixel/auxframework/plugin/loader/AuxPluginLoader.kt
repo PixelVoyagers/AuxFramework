@@ -56,7 +56,7 @@ open class AuxPluginLoader(
     override fun postContextRefresh() = runBlocking {
         initializePlugins(scanPlugins())
         val definitions = mutableSetOf<ComponentDefinition>()
-        for (plugin in container.getAll()) runBlocking {
+        for (plugin in container.getAll()) runCatching {
             plugin.classes.forEach {
                 val definition = ComponentDefinition(type = it)
                 componentFactory.defineComponent(definition)
