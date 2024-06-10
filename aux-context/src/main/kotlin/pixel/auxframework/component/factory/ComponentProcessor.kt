@@ -119,9 +119,9 @@ open class ComponentProcessor(private val context: AuxContext) {
             .make()
             .load(component.type.java.classLoader)
             .loaded
-        val definition = ComponentDefinition(clazz.kotlin)
-        context.componentFactory().defineComponent(definition)
-        return createComponentInstance(definition, dependencyStack)
+        component.type = clazz.kotlin
+        dependencyStack.remove(component)
+        return createConcreteComponentInstance(component, dependencyStack)
     }
 
     open fun createConcreteComponentInstance(
@@ -159,7 +159,6 @@ open class ComponentProcessor(private val context: AuxContext) {
                 componentDefinition,
                 dependencyStack
             )
-
             else -> createConcreteComponentInstance(componentDefinition, dependencyStack)
         }
         return instance.also {
