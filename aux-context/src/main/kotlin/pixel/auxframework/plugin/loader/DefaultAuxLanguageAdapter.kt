@@ -2,7 +2,6 @@ package pixel.auxframework.plugin.loader
 
 import pixel.auxframework.component.annotation.Component
 import pixel.auxframework.core.registry.Identifier
-import java.net.URLClassLoader
 
 @Component
 class DefaultAuxLanguageAdapter : AuxLanguageAdapter {
@@ -12,7 +11,7 @@ class DefaultAuxLanguageAdapter : AuxLanguageAdapter {
         AuxPluginClassLoader(
             plugin,
             *plugin.getPluginFile()?.toURI()?.toURL()?.let { arrayOf(it) } ?: emptyArray(),
-            parent = URLClassLoader(plugin.getPluginFile()?.toURI()?.toURL()?.let { arrayOf(it) } ?: emptyArray(), this::class.java.classLoader)
+            parent = this::class.java.classLoader
         )
 
     override suspend fun disposePlugin(plugin: AuxPlugin) {}

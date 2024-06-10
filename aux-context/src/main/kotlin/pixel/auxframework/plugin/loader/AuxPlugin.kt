@@ -7,7 +7,9 @@ import pixel.auxframework.core.registry.Identifier
 import pixel.auxframework.core.registry.Identifiers
 import pixel.auxframework.plugin.util.VersionRange
 import java.io.File
+import java.util.Collections
 import java.util.zip.ZipFile
+import kotlin.reflect.KClass
 
 class AuxPluginMetadata(private val file: File) {
 
@@ -46,6 +48,9 @@ class AuxPlugin(
     internal var initialized: Boolean = false,
     internal var languageAdapter: AuxLanguageAdapter? = null
 ) {
+
+    internal lateinit var classes: Set<KClass<*>>
+    fun getPluginClasses(): Set<KClass<*>> = Collections.unmodifiableSet(classes)
 
     fun isInitialized() = initialized
     internal var file: File? = null

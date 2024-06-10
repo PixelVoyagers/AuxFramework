@@ -135,7 +135,7 @@ open class AuxPluginLoader(
         }
         plugin.classLoader = adapter.createClassLoader(plugin)
         adapter.initializePlugin(plugin)
-        componentProcessor.scanComponents(setOf(plugin.getPluginClassLoader())) {
+        plugin.classes = componentProcessor.scanComponents(setOf(plugin.getPluginClassLoader()), false) {
             addUrls(*plugin.classLoader!!.urLs)
         }
     }

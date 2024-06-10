@@ -20,6 +20,7 @@ import java.lang.reflect.Array
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.util.*
+import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.*
@@ -32,7 +33,8 @@ class ComponentProcessingException(message: String, cause: Throwable? = null) : 
 
 open class ComponentProcessor(private val context: AuxContext) {
 
-    open fun scanComponents(classLoaders: Set<ClassLoader>, block: ConfigurationBuilder.() -> Unit = {}) {
+    open fun scanComponents(classLoaders: Set<ClassLoader>, defineComponents: Boolean = true, block: ConfigurationBuilder.() -> Unit = {}): Set<KClass<*>> {
+        val classes = mutableSetOf<KClass<*>>()
         for (classLoader in classLoaders) {
             val reflections = Reflections(
                 ConfigurationBuilder()
@@ -51,8 +53,10 @@ open class ComponentProcessor(private val context: AuxContext) {
                     accept
                 }.getOrElse { true }
             }
-            types.forEach { type -> context.componentFactory().defineComponent(ComponentDefinition(type.kotlin)) }
+            classes += types.map { it.kotlin }
+            if (defineComponents) types.forEach { type -> context.componentFactory().defineComponent(ComponentDefinition(type.kotlin)) }
         }
+        return classes
     }
 
     open fun initializeComponent(
