@@ -29,7 +29,7 @@ open class Registry<T>(private val registryKey: ResourceKey<IRegistry<T>>, priva
     }
 
     protected val entries: HashBiMap<Identifier, T> = HashBiMap.create<Identifier, T>()
-    protected var isFrozen: Boolean = true
+    private var isFrozen: Boolean = true
 
     override fun freeze() {
         isFrozen = true
