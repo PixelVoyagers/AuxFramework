@@ -48,9 +48,11 @@ open class Registry<T>(private val registryKey: ResourceKey<IRegistry<T>>, priva
     override operator fun contains(key: Identifier) = key in entries
     override operator fun contains(value: T) = value in entries.inverse()
 
+    @Suppress("UNCHECKED_CAST")
     override fun register(name: Identifier, value: () -> T) = value().also {
         if (isFrozen) throw IllegalStateException("Registry is already frozen")
         if (name in this || it in this) throw IllegalStateException("Duplicate registry entry: $name")
+        if (it is RegistryAware<*>) (it as RegistryAware<IRegistry<T>>).setRegistry(this)
         entries[name] = it
         onRegistry?.invoke(name, it)
     }
