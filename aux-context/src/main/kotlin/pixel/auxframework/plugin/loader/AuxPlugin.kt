@@ -6,8 +6,8 @@ import com.google.common.collect.Range
 import pixel.auxframework.core.registry.Identifier
 import pixel.auxframework.core.registry.Identifiers
 import pixel.auxframework.plugin.util.VersionRange
+import pixel.auxframework.util.toImmutableSet
 import java.io.File
-import java.util.Collections
 import java.util.zip.ZipFile
 import kotlin.reflect.KClass
 
@@ -19,6 +19,7 @@ class AuxPluginMetadata(private val file: File) {
         private val dependencies: List<String> = mutableListOf(),
         private val languageAdapter: String? = null
     ) {
+
         fun getName() = name
         fun getVersion() = version
         fun getDependencies(): List<Pair<String, VersionRange>> = dependencies.map {
@@ -31,6 +32,7 @@ class AuxPluginMetadata(private val file: File) {
         fun getLanguageAdapter() = languageAdapter?.let {
             Identifiers.parseOrThrow(it, defaultNamespace = "auxframework")
         } ?: Identifier("auxframework", "default")
+
     }
 
     private val zipFile = ZipFile(file)
@@ -50,7 +52,7 @@ class AuxPlugin(
 ) {
 
     internal lateinit var classes: Set<KClass<*>>
-    fun getPluginClasses(): Set<KClass<*>> = Collections.unmodifiableSet(classes)
+    fun getPluginClasses(): Set<KClass<*>> = classes.toImmutableSet()
 
     fun isInitialized() = initialized
     internal var file: File? = null
