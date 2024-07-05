@@ -4,6 +4,7 @@ import pixel.auxframework.component.annotation.Qualifier
 import pixel.auxframework.util.toClass
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.full.isSubclassOf
 
 class ComponentNotFoundException(message: String? = null, cause: Throwable? = null) : RuntimeException(message, cause)
 
@@ -57,7 +58,7 @@ abstract class ComponentFactory {
     /**
      * 根据类型获取全部组件定义
      */
-    open fun getComponentDefinitions(type: Class<*>) = getAllComponents().filter { it.isInstance(type.kotlin) }
+    open fun getComponentDefinitions(type: Class<*>) = getAllComponents().filter { it.type.isSubclassOf(type.kotlin) || it.isInstance(type.kotlin) }
 
     /**
      * 根据类型获取全部组件定义
