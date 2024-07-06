@@ -18,11 +18,11 @@ object ClassFileScanner : Scanner, QueryBuilder, NameHelper {
     }
 
     override fun scan(file: javassist.bytecode.ClassFile): List<MutableMap.MutableEntry<String, String>> {
-        return listOf(entry(file.sourceFile, file.name))
+        throw UnsupportedOperationException()
     }
 
     override fun scan(file: Vfs.File): List<Map.Entry<String, String>> {
-        return listOf()
+        return listOf(entry(file.name, file.relativePath))
     }
 
     override fun index() = "auxframework:classes"

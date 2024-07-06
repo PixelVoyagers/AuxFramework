@@ -161,7 +161,7 @@ open class AuxPluginLoader(
                 .addUrls(*plugin.classLoader!!.urLs)
                 .forPackages(*plugin.classLoader!!.definedPackages.map { it.name }.toTypedArray())
         ).getAll(ClassFileScanner).mapNotNull {
-            runCatching { plugin.classLoader?.loadClass(it) }.getOrNull()?.kotlin
+            runCatching { plugin.classLoader?.loadClass(it.split("/").filter(String::isNotEmpty).joinToString(".")) }.getOrNull()?.kotlin
         }.toSet()
         plugin.componentClasses = componentProcessor.scanComponents(setOf(plugin.getPluginClassLoader()), false) {
             addUrls(*plugin.classLoader!!.urLs)
