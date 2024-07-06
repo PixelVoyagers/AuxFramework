@@ -22,7 +22,7 @@ object ClassFileScanner : Scanner, QueryBuilder, NameHelper {
     }
 
     override fun scan(file: Vfs.File): List<Map.Entry<String, String>> {
-        return listOf(entry(file.name, file.relativePath))
+        return listOf(entry(file.relativePath, file.name))
     }
 
     override fun index() = "auxframework:classes"
