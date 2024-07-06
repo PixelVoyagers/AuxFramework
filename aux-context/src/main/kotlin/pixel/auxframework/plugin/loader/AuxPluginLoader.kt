@@ -156,6 +156,7 @@ open class AuxPluginLoader(
         adapter.initializePlugin(plugin)
         plugin.classes = Reflections(
             ConfigurationBuilder()
+                .addScanners(ClassFileScanner)
                 .addClassLoaders(plugin.classLoader)
                 .addUrls(*plugin.classLoader!!.urLs)
                 .forPackages(*plugin.classLoader!!.definedPackages.map { it.name }.toTypedArray())
