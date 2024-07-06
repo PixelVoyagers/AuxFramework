@@ -24,6 +24,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.*
+import kotlin.reflect.javaType
 import kotlin.reflect.jvm.isAccessible
 
 /**
@@ -132,7 +133,7 @@ open class ComponentProcessor(private val context: AuxContext) {
             .firstOrNone { it.findAnnotation<Autowired>() != null }
             .getOrElse { componentDefinition.type.constructors.first() }
         val actualArguments = constructor.parameters
-            .associateWith { param -> autowire(param.type, param.annotations, dependencyStack) }
+            .associateWith { param -> autowire(param.type, param.annotations, dependencyStack, componentDefinition) }
             .filter { !(it.key.isOptional && it.value == null) }
         return try {
             constructor.callBy(actualArguments)
@@ -166,12 +167,18 @@ open class ComponentProcessor(private val context: AuxContext) {
         }
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     open fun autowire(
         type: KType,
         annotations: List<Annotation> = type.annotations,
-        dependencyStack: MutableList<ComponentDefinition> = mutableListOf()
+        dependencyStack: MutableList<ComponentDefinition> = mutableListOf(),
+        component: ComponentDefinition? = null
     ): Any? {
         for (annotation in annotations) if (annotation is Autowired && !annotation.enable) return null
+        if (component != null) runCatching {
+            component::class.java.classLoader.loadClass(type.javaType.typeName)
+            this::class.java.classLoader.loadClass(type.javaType.typeName)
+        }
         val classifier = type.toClass()
         if (classifier.java.isArray) {
             val arrayComponentType = classifier.java.componentType
@@ -202,7 +209,7 @@ open class ComponentProcessor(private val context: AuxContext) {
             for (field in instance::class.memberProperties) {
                 if (field.findAnnotation<Autowired>() == null) continue
                 if (field is KMutableProperty<*>) {
-                    val autowired = autowire(field.returnType, field.annotations)
+                    val autowired = autowire(field.returnType, field.annotations, component = componentDefinition)
                     field.setter.isAccessible = true
                     field.setter.call(instance, autowired)
                 }
@@ -211,7 +218,7 @@ open class ComponentProcessor(private val context: AuxContext) {
             for (member in component::class.memberFunctions) {
                 member.findAnnotation<Component>() ?: continue
                 val actualArguments = member.parameters.associateWith {
-                    if (it.name == null) component else autowire(it.type, it.annotations)
+                    if (it.name == null) component else autowire(it.type, it.annotations, component = componentDefinition)
                 }
                 val invocation = if (member.isSuspend) runBlocking {
                     member.callSuspendBy(actualArguments)
