@@ -3,11 +3,14 @@ package pixel.auxframework.plugin.loader
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import org.reflections.Reflections
+import org.reflections.util.ConfigurationBuilder
 import pixel.auxframework.component.annotation.*
 import pixel.auxframework.component.factory.*
 import pixel.auxframework.context.builtin.SimpleListRepository
 import pixel.auxframework.core.AuxVersion
 import pixel.auxframework.core.registry.Identifier
+import pixel.auxframework.util.ClassFileScanner
 import java.io.File
 import kotlin.reflect.full.findAnnotation
 
@@ -57,7 +60,7 @@ open class AuxPluginLoader(
         initializePlugins(scanPlugins())
         val definitions = mutableSetOf<ComponentDefinition>()
         for (plugin in container.getAll()) runCatching {
-            plugin.classes.forEach {
+            plugin.componentClasses.forEach {
                 val definition = ComponentDefinition(type = it)
                 componentFactory.defineComponent(definition)
                 definitions += definition
@@ -151,7 +154,15 @@ open class AuxPluginLoader(
         }
         plugin.classLoader = adapter.createClassLoader(plugin)
         adapter.initializePlugin(plugin)
-        plugin.classes = componentProcessor.scanComponents(setOf(plugin.getPluginClassLoader()), false) {
+        plugin.classes = Reflections(
+            ConfigurationBuilder()
+                .addClassLoaders(plugin.classLoader)
+                .addUrls(*plugin.classLoader!!.urLs)
+                .forPackages(*plugin.classLoader!!.definedPackages.map { it.name }.toTypedArray())
+        ).getAll(ClassFileScanner).mapNotNull {
+            runCatching { plugin.classLoader?.loadClass(it) }.getOrNull()?.kotlin
+        }.toSet()
+        plugin.componentClasses = componentProcessor.scanComponents(setOf(plugin.getPluginClassLoader()), false) {
             addUrls(*plugin.classLoader!!.urLs)
         }
     }

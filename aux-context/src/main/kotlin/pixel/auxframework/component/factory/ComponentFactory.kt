@@ -51,7 +51,7 @@ abstract class ComponentFactory {
         annotations: List<Annotation> = type.annotations
     ): ComponentDefinition {
         val qualifier = annotations.filterIsInstance<Qualifier>().firstOrNull()
-        return if (qualifier != null) getComponent(qualifier.name)
+        return if (qualifier != null) getComponentDefinition(qualifier.name)
         else getComponentDefinition(type.toClass())
     }
 

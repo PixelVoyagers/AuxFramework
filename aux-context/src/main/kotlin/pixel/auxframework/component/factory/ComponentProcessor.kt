@@ -171,18 +171,14 @@ open class ComponentProcessor(private val context: AuxContext) {
         annotations: List<Annotation> = type.annotations,
         dependencyStack: MutableList<ComponentDefinition> = mutableListOf()
     ): Any? {
-        for (annotation in annotations) {
-            if (annotation is Autowired && !annotation.enable) return null
-        }
+        for (annotation in annotations) if (annotation is Autowired && !annotation.enable) return null
         val classifier = type.toClass()
         if (classifier.java.isArray) {
             val arrayComponentType = classifier.java.componentType
             val qualifier = annotations.firstOrNull { it is Qualifier } as? Qualifier
             val components = context.componentFactory()
                 .getComponentDefinitions(arrayComponentType)
-                .filter {
-                    qualifier == null || qualifier.name == it.name
-                }
+                .filter { qualifier == null || qualifier.name == it.name }
                 .map {
                     initializeComponent(it, dependencyStack)
                     it.cast<Any>()

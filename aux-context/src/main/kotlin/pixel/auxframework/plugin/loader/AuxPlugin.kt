@@ -52,7 +52,10 @@ class AuxPlugin(
 ) {
 
     internal lateinit var classes: Set<KClass<*>>
-    fun getPluginClasses(): Set<KClass<*>> = classes.toImmutableSet()
+    fun getPluginClasses() = classes
+
+    internal lateinit var componentClasses: Set<KClass<*>>
+    fun getPluginComponentClasses(): Set<KClass<*>> = componentClasses.toImmutableSet()
 
     fun isInitialized() = initialized
     internal var file: File? = null
