@@ -18,4 +18,9 @@ open class AuxPluginClassLoader(val plugin: AuxPlugin, vararg urls: URL, parent:
 
     }
 
+
+    override fun loadClass(name: String?): Class<*> {
+        return runCatching { super.loadClass(name) }.getOrNull() ?: runCatching { parent.loadClass(name) }.getOrNull() ?: AuxPluginLoader::class.java.classLoader.loadClass(name)
+    }
+
 }
